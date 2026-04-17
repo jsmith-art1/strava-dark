@@ -126,11 +126,12 @@ body::before {
 #dashboard.visible { display: block; }
 
 .header {
-  background: var(--text);
+  background: #111009;
   color: #f5f2ee;
   padding: 20px 32px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 .header-left { display: flex; align-items: center; gap: 14px; }
 .header-logo { font-family: var(--font-head); font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,242,238,0.5); }
@@ -263,11 +264,12 @@ body::before {
 /* ===== SPORT FILTER BAR ===== */
 .sport-filter-bar {
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border2);
   padding: 0 32px;
   display: flex; align-items: center; gap: 4px;
   overflow-x: auto;
   position: sticky; top: 65px; z-index: 9;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .sport-btn {
   font-family: var(--font-head); font-size: 11px; font-weight: 600;
@@ -528,6 +530,10 @@ body::before {
 [data-theme="dark"] .drop-zone:hover, [data-theme="dark"] .drop-zone.drag-over { background: #1e1b18; }
 [data-theme="dark"] .modal-drop:hover, [data-theme="dark"] .modal-drop.drag-over { background: #1a1612; }
 [data-theme="dark"] .pr-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+[data-theme="dark"] .sport-filter-bar { background: #181512; border-bottom-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .modal { background: #1a1714; }
+[data-theme="dark"] .compare-modal { background: #1a1714; }
+[data-theme="dark"] .compare-header { background: #1a1714; }
 
   padding: 24px 0 8px;
   text-align: center;
