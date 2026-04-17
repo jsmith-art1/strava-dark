@@ -566,6 +566,84 @@ body::before {
 [data-theme="dark"] .compare-modal { background: #1a1714; }
 [data-theme="dark"] .compare-header { background: #1a1714; }
 
+/* ===== PHOTO GALLERY ===== */
+.gallery-drop-zone {
+  border: 1.5px dashed var(--border2);
+  border-radius: 4px; padding: 28px 32px;
+  text-align: center; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg); position: relative;
+}
+.gallery-drop-zone:hover, .gallery-drop-zone.drag-over {
+  border-color: var(--gravel); background: #fdf8f4;
+}
+[data-theme="dark"] .gallery-drop-zone:hover,
+[data-theme="dark"] .gallery-drop-zone.drag-over { background: #1e1b18; }
+.gallery-drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.gallery-drop-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+.gallery-drop-hint { font-family: var(--font-head); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.gallery-drop-sub { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 300; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 16px; }
+.photo-cell { position: relative; aspect-ratio: 1; border-radius: 3px; overflow: hidden; cursor: pointer; background: var(--surface2); }
+.photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.22s; }
+.photo-cell:hover img { transform: scale(1.05); }
+.photo-cell-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0);
+  transition: background 0.2s; display: flex;
+  align-items: flex-end; justify-content: flex-end; padding: 6px;
+}
+.photo-cell:hover .photo-cell-overlay { background: rgba(0,0,0,0.28); }
+.photo-delete-btn {
+  background: rgba(0,0,0,0.65); color: white; border: none; border-radius: 2px;
+  width: 24px; height: 24px; font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.photo-cell:hover .photo-delete-btn { opacity: 1; }
+.photo-delete-btn:hover { background: #c0392b; }
+.gallery-count { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; text-align: right; }
+
+/* Lightbox */
+#lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 300;
+  align-items: center; justify-content: center;
+}
+#lightbox.open { display: flex; }
+#lightbox-img {
+  max-width: 90vw; max-height: 86vh;
+  object-fit: contain; border-radius: 3px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+  user-select: none;
+}
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.1); color: white;
+  border: none; border-radius: 2px; width: 44px; height: 44px;
+  font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; user-select: none;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,0.22); }
+#lightbox-prev { left: 16px; }
+#lightbox-next { right: 16px; }
+#lightbox-close {
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.1); color: white; border: none;
+  border-radius: 2px; width: 36px; height: 36px; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+#lightbox-close:hover { background: rgba(255,255,255,0.22); }
+#lightbox-counter {
+  position: absolute; bottom: 16px;
+  font-family: var(--font-head); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; color: rgba(255,255,255,0.45);
+}
+
+.footer {
   padding: 24px 0 8px;
   text-align: center;
   font-size: 11px; color: var(--muted); font-weight: 300; font-style: italic;
@@ -782,6 +860,30 @@ body::before {
         </div>
 
         <div id="hm-tooltip" class="hm-tooltip"></div>
+
+        <!-- Photo Gallery -->
+        <div class="panel" id="gallery-panel">
+          <div class="panel-header">
+            <div class="panel-title">Photo Gallery</div>
+            <div class="panel-badge" id="gallery-count-badge">0 photos</div>
+          </div>
+          <div class="gallery-drop-zone" id="gallery-drop-zone">
+            <input type="file" id="gallery-file-input" accept="image/*" multiple>
+            <span class="gallery-drop-icon">📷</span>
+            <div class="gallery-drop-hint">Drop photos here</div>
+            <div class="gallery-drop-sub">JPG, PNG, HEIC — drag &amp; drop or click to browse</div>
+          </div>
+          <div class="photo-grid" id="photo-grid"></div>
+        </div>
+
+        <!-- Lightbox -->
+        <div id="lightbox" onclick="closeLightbox()">
+          <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+          <button class="lightbox-nav" id="lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">‹</button>
+          <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+          <button class="lightbox-nav" id="lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">›</button>
+          <div id="lightbox-counter"></div>
+        </div>
 
         <div class="footer">Drop new CSV or GPX files at any time — your activity history accumulates automatically</div>
 
@@ -1411,6 +1513,9 @@ function resetAll() {
   localStorage.removeItem('gmt_rides');
   localStorage.removeItem('gmt_goals');
   localStorage.removeItem('gmt_title');
+  localStorage.removeItem('gmt_photos');
+  photos = [];
+  renderGallery();
   activeSport = ALL_KEY;
   document.getElementById('drop-screen').classList.remove('hidden');
   document.getElementById('dashboard').classList.remove('visible');
@@ -2065,17 +2170,118 @@ function hideHmTip() {
   document.getElementById('hm-tooltip').style.opacity = '0';
 }
 
+// ===== PHOTO GALLERY =====
+let photos = JSON.parse(localStorage.getItem('gmt_photos') || '[]');
+// photos = [{ id, dataUrl, name, timestamp }]
+let lightboxIndex = 0;
+
+function savePhotos() {
+  try { localStorage.setItem('gmt_photos', JSON.stringify(photos)); } catch(e) {
+    alert('Storage full — try removing some photos. Browser localStorage has a ~5MB limit.');
+  }
+}
+
+function initGallery() {
+  const dz = document.getElementById('gallery-drop-zone');
+  const fi = document.getElementById('gallery-file-input');
+  if (!dz || !fi) return;
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handlePhotoFiles(e.dataTransfer.files); });
+  fi.addEventListener('change', e => { handlePhotoFiles(e.target.files); e.target.value = ''; });
+
+  renderGallery();
+}
+
+function handlePhotoFiles(files) {
+  const imgFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!imgFiles.length) return;
+  let done = 0;
+  imgFiles.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      photos.push({ id: Date.now() + Math.random(), dataUrl: e.target.result, name: f.name, timestamp: Date.now() });
+      done++;
+      if (done === imgFiles.length) { savePhotos(); renderGallery(); }
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderGallery() {
+  const grid = document.getElementById('photo-grid');
+  const badge = document.getElementById('gallery-count-badge');
+  if (!grid) return;
+  if (badge) badge.textContent = photos.length + ' photo' + (photos.length !== 1 ? 's' : '');
+
+  if (!photos.length) {
+    grid.innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = photos.map((p, i) => `
+    <div class="photo-cell" onclick="openLightbox(${i})">
+      <img src="${p.dataUrl}" alt="${p.name}" loading="lazy">
+      <div class="photo-cell-overlay">
+        <button class="photo-delete-btn" onclick="event.stopPropagation();deletePhoto(${i})" title="Remove photo">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function deletePhoto(i) {
+  if (!confirm('Remove this photo?')) return;
+  photos.splice(i, 1);
+  savePhotos();
+  renderGallery();
+  if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+}
+
+function openLightbox(i) {
+  lightboxIndex = i;
+  updateLightboxImage();
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function lightboxNav(dir) {
+  lightboxIndex = (lightboxIndex + dir + photos.length) % photos.length;
+  updateLightboxImage();
+}
+
+function updateLightboxImage() {
+  const p = photos[lightboxIndex];
+  if (!p) return;
+  document.getElementById('lightbox-img').src = p.dataUrl;
+  document.getElementById('lightbox-img').alt = p.name;
+  document.getElementById('lightbox-counter').textContent = (lightboxIndex + 1) + ' / ' + photos.length;
+}
+
+// Keyboard navigation for lightbox
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox')?.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') lightboxNav(1);
+  if (e.key === 'ArrowLeft')  lightboxNav(-1);
+});
+
+// (photos cleared in resetAll directly)
+
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   closeModal();
   closeCompare();
   closeLinkSettings();
+  closeLightbox();
 });
 
 // ===== INIT =====
 loadLinkButtons();
 loadDashboardTitle();
+initGallery();
 if (rides.length) renderDashboard();
 </script>
 </body>
