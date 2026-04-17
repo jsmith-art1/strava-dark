@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Green Mountain Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f2ee;
+  --surface: #ffffff;
+  --surface2: #ede9e3;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1a1714;
+  --muted: #7a7269;
+  --tag: #e8e3dc;
+  --font-head: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+
+  /* Sport colors — slightly more vivid */
+  --ski:   #2e7dd4;
+  --gravel:#c45e28;
+  --mtb:   #1e7a5e;
+  --hike:  #9a6e2e;
+  --run:   #a03470;
+  --all:   #4a4a6a;
+}
+
+[data-theme="dark"] {
+  --bg: #141210;
+  --surface: #1e1b18;
+  --surface2: #2a2620;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #ede9e3;
+  --muted: #8a8178;
+  --tag: #2e2a24;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(128,128,128,0.06) 39px, rgba(128,128,128,0.06) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(128,128,128,0.06) 39px, rgba(128,128,128,0.06) 40px);
+  pointer-events: none; z-index: 0;
+}
+
+/* ===== DROP SCREEN ===== */
+#drop-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 32px;
+  z-index: 50;
+  transition: opacity 0.35s ease;
+}
+#drop-screen.hidden { opacity: 0; pointer-events: none; }
+
+.drop-logo {
+  font-family: var(--font-head);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--muted);
+}
+.drop-logo em { color: var(--gravel); font-style: normal; }
+
+.drop-zone {
+  position: relative;
+  width: 520px; max-width: 90vw;
+  border: 1.5px dashed var(--border2);
+  border-radius: 4px;
+  padding: 56px 48px 48px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface);
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--gravel);
+  background: #fdf8f4;
+  transform: translateY(-2px);
+}
+.drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-eyebrow {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--gravel);
+  margin-bottom: 12px;
+}
+.drop-headline {
+  font-family: var(--font-head); font-size: 34px; font-weight: 700;
+  line-height: 1.1; margin-bottom: 12px;
+}
+.drop-sub { color: var(--muted); font-size: 14px; font-weight: 300; line-height: 1.6; }
+.drop-pills { display: flex; gap: 8px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+.pill {
+  font-family: var(--font-head); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--muted);
+  border-radius: 2px; padding: 4px 10px;
+}
+.drop-hint { font-size: 12px; color: var(--muted); font-style: italic; }
+
+/* ===== DASHBOARD ===== */
+#dashboard { display: none; position: relative; z-index: 1; }
+#dashboard.visible { display: block; }
+
+.header {
+  background: var(--text);
+  color: #f5f2ee;
+  padding: 20px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo { font-family: var(--font-head); font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,242,238,0.5); }
+.header-logo em { color: #e8855a; font-style: normal; }
+.header-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; letter-spacing: 0.02em; }
+.header-meta { font-size: 12px; color: rgba(245,242,238,0.5); font-family: var(--font-body); font-weight: 300; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.add-btn, .reset-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 2px; cursor: pointer;
+  transition: all 0.15s; border: none; position: relative;
+}
+.add-btn { background: var(--gravel); color: white; }
+.add-btn:hover { background: #a84e22; }
+.reset-btn { background: rgba(255,255,255,0.1); color: rgba(245,242,238,0.7); }
+.reset-btn:hover { background: rgba(255,255,255,0.18); color: #f5f2ee; }
+.theme-btn {
+  font-family: var(--font-head); font-size: 18px;
+  padding: 6px 10px; border-radius: 2px; cursor: pointer;
+  background: rgba(255,255,255,0.1); color: rgba(245,242,238,0.7);
+  border: none; line-height: 1; transition: all 0.15s;
+}
+.theme-btn:hover { background: rgba(255,255,255,0.18); color: #f5f2ee; }
+
+/* ===== PERSONAL RECORDS ===== */
+.pr-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.pr-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 3px; padding: 12px 14px;
+  position: relative; overflow: hidden;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.pr-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.pr-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--pr-color, var(--gravel));
+}
+.pr-trophy { font-size: 18px; margin-bottom: 6px; display: block; }
+.pr-label { font-family: var(--font-head); font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pr-val { font-family: var(--font-head); font-size: 22px; font-weight: 700; line-height: 1; color: var(--pr-color, var(--text)); margin-bottom: 2px; }
+.pr-sub { font-size: 10px; color: var(--muted); font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== COMPARE MODAL ===== */
+#compare-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,9,8,0.7); backdrop-filter: blur(4px);
+  z-index: 200; align-items: center; justify-content: center;
+}
+#compare-overlay.open { display: flex; }
+.compare-modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 6px; width: 700px; max-width: 96vw; max-height: 90vh;
+  overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.3);
+  animation: modalIn 0.2s ease;
+}
+.compare-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 16px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.compare-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; }
+.compare-body { padding: 22px; }
+.compare-select-row {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+  align-items: center; margin-bottom: 22px;
+}
+.compare-vs { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--muted); text-align: center; }
+.compare-select {
+  font-family: var(--font-head); font-size: 12px; font-weight: 500;
+  background: var(--bg); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 3px; padding: 8px 10px;
+  width: 100%; cursor: pointer;
+}
+.compare-select:focus { outline: none; border-color: var(--gravel); }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.compare-table th {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left;
+}
+.compare-table th:not(:first-child) { text-align: right; }
+.compare-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.compare-table td:not(:first-child) { text-align: right; font-family: var(--font-head); font-size: 13px; font-weight: 600; }
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-metric { font-family: var(--font-head); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.compare-winner { color: var(--mtb); }
+.compare-loser { color: var(--muted); font-weight: 400; }
+.compare-bar-wrap { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.compare-bar-label { font-family: var(--font-head); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; min-width: 64px; color: var(--muted); }
+.compare-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.compare-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+.compare-run-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 9px 22px; border-radius: 2px; cursor: pointer;
+  background: var(--gravel); color: white; border: none;
+  transition: background 0.15s; display: block; margin: 0 auto 4px;
+}
+.compare-run-btn:hover { background: #a84e22; }
+.compare-placeholder {
+  text-align: center; padding: 32px;
+  font-family: var(--font-head); font-size: 13px; color: var(--muted);
+}
+
+/* ===== EXPORT BTN ===== */
+.export-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 14px; border-radius: 2px; cursor: pointer;
+  background: rgba(255,255,255,0.1); color: rgba(245,242,238,0.7);
+  border: none; transition: all 0.15s;
+}
+.export-btn:hover { background: rgba(255,255,255,0.18); color: #f5f2ee; }
+
+/* ===== SPORT FILTER BAR ===== */
+.sport-filter-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center; gap: 4px;
+  overflow-x: auto;
+  position: sticky; top: 65px; z-index: 9;
+}
+.sport-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 11px 16px; border: none; border-bottom: 3px solid transparent;
+  background: transparent; color: var(--muted); cursor: pointer;
+  white-space: nowrap; transition: all 0.14s;
+  display: flex; align-items: center; gap: 6px;
+}
+.sport-btn:hover { color: var(--text); }
+.sport-btn.active { color: var(--sport-color); border-bottom-color: var(--sport-color); }
+.sport-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sport-color); opacity: 0.5; }
+.sport-btn.active .sport-dot { opacity: 1; }
+.sport-count-badge {
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  background: var(--tag); color: var(--muted);
+  border-radius: 2px; padding: 2px 5px;
+}
+.sport-btn.active .sport-count-badge { background: var(--sport-color); color: white; }
+
+/* ===== MODAL ===== */
+#modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(10,9,8,0.65);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  width: 520px; max-width: 92vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+  overflow: hidden;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 16px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; letter-spacing: 0.03em; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 2px;
+  background: var(--tag); border: none; cursor: pointer;
+  font-size: 16px; color: var(--muted); line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.modal-close:hover { background: var(--border2); color: var(--text); }
+.modal-body { padding: 22px; }
+.modal-drop {
+  position: relative;
+  border: 1.5px dashed var(--border2);
+  border-radius: 4px;
+  padding: 48px 32px 40px;
+  text-align: center; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg);
+}
+.modal-drop:hover, .modal-drop.drag-over { border-color: var(--gravel); background: #fdf8f4; }
+.modal-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.modal-drop-icon { font-size: 28px; margin-bottom: 12px; display: block; }
+.modal-drop-head { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.modal-drop-sub { font-size: 13px; color: var(--muted); font-weight: 300; }
+.modal-status { margin-top: 16px; min-height: 20px; font-size: 12px; color: var(--muted); font-style: italic; text-align: center; }
+.modal-status.success { color: var(--ski); font-style: normal; font-weight: 500; }
+.modal-status.error { color: #8b3a3a; font-style: normal; }
+.modal-footer {
+  padding: 14px 22px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-hint { font-size: 11px; color: var(--muted); font-style: italic; }
+.modal-done-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 20px; border-radius: 2px; cursor: pointer;
+  background: var(--text); color: var(--bg); border: none;
+  transition: opacity 0.15s;
+}
+.modal-done-btn:hover { opacity: 0.8; }
+
+.main { padding: 28px 32px; max-width: 1280px; margin: 0 auto; }
+
+/* ── Goal bar ── */
+.goal-bar {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.goal-bar-card {
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 18px 22px 14px;
+  position: relative; overflow: hidden;
+}
+.goal-bar-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--goal-color, var(--gravel));
+}
+.goal-bar-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.goal-bar-label { font-family: var(--font-head); font-size: 10px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.goal-bar-pct { font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--goal-color, var(--gravel)); }
+.goal-bar-pct.done { color: var(--mtb); }
+.goal-bar-numbers { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+.goal-bar-current { font-family: var(--font-head); font-size: 32px; font-weight: 700; line-height: 1; color: var(--goal-color, var(--text)); }
+.goal-bar-unit { font-family: var(--font-head); font-size: 14px; color: var(--muted); }
+.goal-bar-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.goal-bar-fill { height: 100%; border-radius: 3px; background: var(--goal-color, var(--gravel)); transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+.goal-bar-fill.done { background: var(--mtb); }
+.goal-bar-footer { display: flex; align-items: center; }
+.goal-bar-target-row { display: flex; align-items: center; gap: 5px; }
+.goal-bar-target-label { font-size: 11px; color: var(--muted); }
+.goal-bar-input {
+  font-family: var(--font-head); font-size: 13px; font-weight: 600;
+  width: 68px; padding: 3px 6px; border-radius: 2px;
+  border: 1px solid var(--border2); background: var(--bg);
+  color: var(--text); text-align: right;
+}
+.goal-bar-input:focus { outline: none; border-color: var(--goal-color, var(--gravel)); }
+
+/* ── Body layout ── */
+.body-layout {
+  display: grid; grid-template-columns: 188px 1fr;
+  gap: 16px; align-items: start;
+}
+.sidebar { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 112px; }
+.kpi-side {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--kpi-color, var(--gravel));
+  border-radius: 3px; padding: 12px 14px;
+}
+.kpi-label { font-family: var(--font-head); font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.kpi-val { font-family: var(--font-head); font-size: 22px; font-weight: 700; line-height: 1; color: var(--kpi-color, var(--text)); margin-bottom: 2px; }
+.kpi-sub { font-size: 10px; color: var(--muted); font-weight: 300; }
+.content-col { min-width: 0; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 3px; padding: 20px 22px; margin-bottom: 16px;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.panel-title { font-family: var(--font-head); font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.panel-badge {
+  font-family: var(--font-head); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--muted);
+  border-radius: 2px; padding: 3px 8px;
+}
+
+/* Sport breakdown mini-chart */
+.sport-breakdown { display: flex; flex-direction: column; gap: 8px; }
+.sport-breakdown-row {
+  display: flex; align-items: center; gap: 10px; font-size: 12px;
+}
+.sbd-label { font-family: var(--font-head); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; width: 72px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.sbd-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.sbd-bar-fill { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+.sbd-val { font-family: var(--font-head); font-size: 11px; font-weight: 600; min-width: 52px; text-align: right; color: var(--muted); }
+
+/* tab bar */
+.tab-bar { display: flex; gap: 2px; flex-wrap: wrap; }
+.tab {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 2px; border: 1px solid transparent;
+  background: transparent; color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.tab:hover { background: var(--tag); color: var(--text); }
+.tab.active { background: var(--gravel); color: white; border-color: var(--gravel); }
+.tab.sort-active { background: var(--gravel); color: white; border-color: var(--gravel); }
+#sort-dir { background: var(--surface2); color: var(--muted); border-color: var(--border2); font-size: 10px; }
+#sort-dir:hover { background: var(--text); color: var(--bg); }
+
+.chart-wrap { position: relative; }
+
+/* activity log table */
+.ride-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ride-table th {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  padding: 0 10px 10px; text-align: left; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ride-table td {
+  padding: 9px 10px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ride-table tbody tr:hover { background: #faf8f5; }
+.ride-name { font-weight: 500; font-size: 13px; }
+.ride-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.stat-chip {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  background: var(--tag); color: var(--text); border-radius: 2px; padding: 2px 7px;
+  display: inline-block;
+}
+.elev-chip { background: #e3eeea; color: var(--mtb); }
+.hr-chip { background: #f0e8e8; color: #8b3a3a; }
+.sport-chip {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  border-radius: 2px; padding: 2px 7px; display: inline-block;
+  color: white;
+}
+.delete-btn {
+  background: transparent; border: none; color: var(--muted);
+  cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 2px;
+  opacity: 0.5; transition: all 0.12s;
+}
+.delete-btn:hover { background: #fde8e8; color: #c0392b; opacity: 1; }
+
+.empty { padding: 48px 24px; text-align: center; }
+.empty-head { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--muted); }
+.empty-sub { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 300; }
+
+/* heatmap */
+.heatmap-scroll { overflow-x: auto; padding: 4px 0 8px; }
+.heatmap-cell {
+  width: 13px; height: 13px; border-radius: 2px;
+  background: var(--surface2); cursor: default;
+  transition: transform 0.1s;
+}
+.heatmap-cell.has-ride { cursor: pointer; }
+.heatmap-cell.has-ride:hover { transform: scale(1.3); }
+.heatmap-cell.hm-0 { background: var(--surface2); }
+.heatmap-cell.hm-1 { background: #b8d4f0; }
+.heatmap-cell.hm-2 { background: #6aaae0; }
+.heatmap-cell.hm-3 { background: #3a7abf; }
+.heatmap-cell.hm-4 { background: #1d4e7a; }
+.hm-legend { display: flex; align-items: center; gap: 6px; justify-content: flex-end; margin-top: 10px; font-size: 10px; color: var(--muted); }
+.hm-legend-cells { display: flex; gap: 3px; }
+.hm-tooltip {
+  position: fixed; pointer-events: none;
+  background: var(--text); color: #f5f2ee;
+  font-family: var(--font-head); font-size: 11px; font-weight: 500;
+  padding: 5px 10px; border-radius: 2px; z-index: 999;
+  opacity: 0; transition: opacity 0.12s;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .heatmap-cell.hm-0 { background: #2a2620; }
+[data-theme="dark"] .heatmap-cell.hm-1 { background: #1e3d5e; }
+[data-theme="dark"] .heatmap-cell.hm-2 { background: #235a8a; }
+[data-theme="dark"] .heatmap-cell.hm-3 { background: #2e7dd4; }
+[data-theme="dark"] .heatmap-cell.hm-4 { background: #5aa3f0; }
+[data-theme="dark"] .ride-table tbody tr:hover { background: #242018; }
+[data-theme="dark"] .drop-zone:hover, [data-theme="dark"] .drop-zone.drag-over { background: #1e1b18; }
+[data-theme="dark"] .modal-drop:hover, [data-theme="dark"] .modal-drop.drag-over { background: #1a1612; }
+[data-theme="dark"] .pr-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+
+  padding: 24px 0 8px;
+  text-align: center;
+  font-size: 11px; color: var(--muted); font-weight: 300; font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .main { padding: 12px; }
+  .body-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; flex-direction: row; flex-wrap: wrap; }
+  .kpi-side { flex: 1 0 calc(50% - 5px); min-width: 120px; }
+  .goal-bar { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .sport-filter-bar { padding: 0 12px; }
+  .header { padding: 12px 16px; }
+  .header-right { gap: 6px; }
+  .add-btn, .reset-btn, .export-btn { padding: 7px 10px; font-size: 10px; }
+  .theme-btn { padding: 5px 8px; }
+  .pr-grid { grid-template-columns: repeat(2, 1fr); }
+  .compare-select-row { grid-template-columns: 1fr; }
+  .compare-vs { display: none; }
+  .ride-table { font-size: 12px; }
+  .ride-table th, .ride-table td { padding: 7px 6px; }
+  .header-meta { display: none; }
+}
+@media (max-width: 480px) {
+  .pr-grid { grid-template-columns: 1fr 1fr; }
+  .goal-bar-current { font-size: 24px; }
+  .header-logo { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- DROP SCREEN -->
+<div id="drop-screen">
+  <div class="drop-logo">Green Mountain <em>Tracker</em></div>
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".csv" multiple>
+    <div class="drop-eyebrow">Import your data</div>
+    <div class="drop-headline">All your adventures,<br>one dashboard</div>
+    <div class="drop-sub">Drop Garmin / Polar / Suunto CSV exports here<br>and your full season comes to life instantly</div>
+    <div class="drop-pills">
+      <span class="pill" style="background:#ddeaf8;color:#3a7abf">⛷ Skiing</span>
+      <span class="pill" style="background:#f5e8de;color:#c05f2a">🚵 Gravel</span>
+      <span class="pill" style="background:#deeee9;color:#2a6f5e">🚵 MTB</span>
+      <span class="pill" style="background:#f0e9dc;color:#8b6b3a">🥾 Hiking</span>
+      <span class="pill" style="background:#f0e0ed;color:#8b3a6b">🏃 Running</span>
+    </div>
+    <div class="drop-hint" style="margin-top:16px">Click to browse files or drag &amp; drop</div>
+  </div>
+  <div class="drop-hint">Your data stays local — nothing is uploaded anywhere</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Activities</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-drop" id="modal-drop">
+        <input type="file" id="modal-file-input" accept=".csv" multiple>
+        <span class="modal-drop-icon">📂</span>
+        <div class="modal-drop-head">Drop CSV files here</div>
+        <div class="modal-drop-sub">Garmin, Polar, Suunto — any sport</div>
+      </div>
+      <div class="modal-status" id="modal-status"></div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-hint">Duplicates are skipped automatically</div>
+      <button class="modal-done-btn" onclick="closeModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+  <div class="header">
+    <div class="header-left">
+      <div>
+        <div class="header-logo">Green Mountain <em>Tracker</em></div>
+      </div>
+      <div>
+        <div class="header-title" id="h-title">Green Mountain Tracker</div>
+        <div class="header-meta" id="h-meta">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle dark mode">🌙</button>
+      <button class="export-btn" onclick="exportCSV()" title="Export all activities as CSV">↓ Export</button>
+      <button class="add-btn" onclick="openModal()">+ Add activities</button>
+      <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
+    </div>
+  </div>
+
+  <!-- SPORT FILTER BAR -->
+  <div class="sport-filter-bar" id="sport-filter-bar"></div>
+
+  <div class="main">
+
+    <!-- GOAL BAR -->
+    <div class="goal-bar" id="goal-bar"></div>
+
+    <!-- BODY -->
+    <div class="body-layout">
+      <div class="sidebar" id="kpi-strip"></div>
+
+      <div class="content-col">
+
+        <!-- Trend chart -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Activity trends</div>
+            <div class="tab-bar">
+              <button class="tab active" onclick="switchTrend(this,'dist')">Distance</button>
+              <button class="tab" onclick="switchTrend(this,'speed')">Speed/Pace</button>
+              <button class="tab" onclick="switchTrend(this,'elev')">Elevation</button>
+              <button class="tab" onclick="switchTrend(this,'hr')">Heart rate</button>
+              <button class="tab" onclick="switchTrend(this,'cal')">Calories</button>
+            </div>
+          </div>
+          <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+        </div>
+
+        <!-- 2-col row -->
+        <div class="grid-2">
+          <div class="panel" style="margin-bottom:0">
+            <div class="panel-header">
+              <div class="panel-title">Monthly volume</div>
+            </div>
+            <div class="chart-wrap" style="height:190px"><canvas id="monthChart"></canvas></div>
+          </div>
+          <div class="panel" style="margin-bottom:0">
+            <div class="panel-header">
+              <div class="panel-title">Sport breakdown</div>
+            </div>
+            <div id="sport-breakdown-wrap" style="padding-top:8px"></div>
+          </div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <!-- Personal Records -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Personal Records</div>
+            <div class="panel-badge" id="pr-sport-badge">All sports</div>
+          </div>
+          <div class="pr-grid" id="pr-grid"></div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <!-- Activity log -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Activity log</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="panel-badge" id="ride-count-badge">0 activities</div>
+              <button class="tab" onclick="openCompare()" style="background:var(--surface2);border-color:var(--border2)">⇄ Compare</button>
+              <div style="display:flex;gap:2px;">
+                <button class="tab active" onclick="setSort(this,'date')" id="sort-date">Date</button>
+                <button class="tab" onclick="setSort(this,'dist')" id="sort-dist">Dist</button>
+                <button class="tab" onclick="setSort(this,'elev')" id="sort-elev">Elev</button>
+                <button class="tab" onclick="setSort(this,'speed')" id="sort-speed">Speed</button>
+                <button class="tab" onclick="toggleSortDir()" id="sort-dir" style="min-width:76px;">↓ Newest</button>
+              </div>
+            </div>
+          </div>
+          <div id="ride-log-wrap">
+            <div class="empty"><div class="empty-head">No activities yet</div><div class="empty-sub">Drop CSV files to get started</div></div>
+          </div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <!-- Heatmap -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Activity calendar</div>
+            <div id="heatmap-year-controls" style="display:flex;gap:2px;"></div>
+          </div>
+          <div class="heatmap-scroll">
+            <div id="heatmap-wrap"></div>
+          </div>
+          <div class="hm-legend">
+            <span>Less</span>
+            <div class="hm-legend-cells">
+              <div class="heatmap-cell hm-0"></div>
+              <div class="heatmap-cell hm-1"></div>
+              <div class="heatmap-cell hm-2"></div>
+              <div class="heatmap-cell hm-3"></div>
+              <div class="heatmap-cell hm-4"></div>
+            </div>
+            <span>More</span>
+          </div>
+        </div>
+
+        <div id="hm-tooltip" class="hm-tooltip"></div>
+
+        <div class="footer">Drop new CSVs at any time — your activity history accumulates automatically</div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE MODAL -->
+<div id="compare-overlay" onclick="handleCompareOverlayClick(event)">
+  <div class="compare-modal">
+    <div class="compare-header">
+      <div class="compare-title">⇄ Compare Activities</div>
+      <button class="modal-close" onclick="closeCompare()">✕</button>
+    </div>
+    <div class="compare-body">
+      <div class="compare-select-row">
+        <select class="compare-select" id="compare-a" onchange="runCompare()">
+          <option value="">— Select activity A —</option>
+        </select>
+        <div class="compare-vs">VS</div>
+        <select class="compare-select" id="compare-b" onchange="runCompare()">
+          <option value="">— Select activity B —</option>
+        </select>
+      </div>
+      <div id="compare-result">
+        <div class="compare-placeholder">Select two activities above to compare them side-by-side</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SPORT CONFIG =====
+const SPORTS = {
+  ski:    { label: 'Skiing',   icon: '⛷',  color: '#2e7dd4', keys: ['CROSS COUNTRY SKIING','DOWNHILL SKIING','SKI','SKIING','ALPINE SKIING','BACKCOUNTRY SKIING','CROSS_COUNTRY_SKIING','DOWNHILL_SKIING','ALPINE','BACKCOUNTRY'] },
+  gravel: { label: 'Gravel',   icon: '🚵',  color: '#c45e28', keys: ['CYCLING','ROAD CYCLING','GRAVEL CYCLING','GRAVEL','ROAD_CYCLING','GRAVEL_CYCLING','ROAD BIKING','GRAVEL BIKING'] },
+  mtb:    { label: 'MTB',      icon: '🚵',  color: '#1e7a5e', keys: ['MOUNTAIN BIKING','MTB','MOUNTAIN BIKE','MOUNTAIN_BIKING','MOUNTAIN_BIKE'] },
+  hike:   { label: 'Hiking',   icon: '🥾',  color: '#9a6e2e', keys: ['HIKING','TRAIL HIKING','TREKKING','TRAIL_HIKING','TRAIL WALK','TRAIL_WALK'] },
+  run:    { label: 'Running',  icon: '🏃',  color: '#a03470', keys: ['RUNNING','RUN','TRAIL RUNNING','ROAD RUNNING','TRAIL_RUNNING','ROAD_RUNNING','5K','10K','MARATHON','HALF MARATHON'] },
+};
+const ALL_KEY = 'all';
+
+function detectSport(sportStr) {
+  if (!sportStr) return null;
+  const s = sportStr.toUpperCase().trim();
+  for (const [key, def] of Object.entries(SPORTS)) {
+    if (def.keys.some(k => s === k || s.includes(k) || k.includes(s))) return key;
+  }
+  return null;
+}
+
+function sportColor(key) {
+  return SPORTS[key]?.color || '#7a7269';
+}
+function sportIcon(key) {
+  return SPORTS[key]?.icon || '🏅';
+}
+function sportLabel(key) {
+  return SPORTS[key]?.label || key;
+}
+
+// ===== STATE =====
+let rides = JSON.parse(localStorage.getItem('gmt_rides') || '[]');
+let trendChartInst, monthChartInst;
+let activeSport = ALL_KEY;
+let sortKey = 'date';
+let sortAsc = false;
+let currentTrendMetric = 'dist';
+
+// ===== THEME =====
+(function() {
+  const saved = localStorage.getItem('gmt_theme');
+  if (saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+})();
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('gmt_theme','light');
+    document.getElementById('theme-btn').textContent = '🌙';
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem('gmt_theme','dark');
+    document.getElementById('theme-btn').textContent = '☀️';
+  }
+  // update chart colors
+  if (trendChartInst || monthChartInst) {
+    buildTrendChart(currentTrendMetric);
+    buildMonthChart();
+  }
+}
+
+// Sync button icon on load
+window.addEventListener('DOMContentLoaded', () => {
+  if (document.documentElement.getAttribute('data-theme') === 'dark') {
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '☀️';
+  }
+});
+
+// ===== EXPORT =====
+function exportCSV() {
+  if (!rides.length) return alert('No activities to export.');
+  const headers = ['Name','Date','Sport','Distance (km)','Duration (s)','Avg Speed (km/h)','Max Speed (km/h)','Ascent (m)','Descent (m)','Avg HR (bpm)','Calories','Training Load'];
+  const rows = rides.map(r => [
+    `"${r.name.replace(/"/g,'""')}"`, r.date, r.sport,
+    r.distKm.toFixed(2), r.duration, r.avgSpeed.toFixed(2),
+    r.maxSpeed.toFixed(2), r.ascent.toFixed(0), r.descent.toFixed(0),
+    r.avgHr, r.calories, r.trainingLoad
+  ].join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'green-mountain-activities.csv';
+  a.click();
+}
+
+// ===== DROP SETUP =====
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const modalDrop = document.getElementById('modal-drop');
+const modalFileInput = document.getElementById('modal-file-input');
+const modalStatus = document.getElementById('modal-status');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files, false); });
+fileInput.addEventListener('change', e => { handleFiles(e.target.files, false); e.target.value=''; });
+
+modalDrop.addEventListener('dragover', e => { e.preventDefault(); modalDrop.classList.add('drag-over'); });
+modalDrop.addEventListener('dragleave', () => modalDrop.classList.remove('drag-over'));
+modalDrop.addEventListener('drop', e => { e.preventDefault(); modalDrop.classList.remove('drag-over'); handleFiles(e.dataTransfer.files, true); });
+modalFileInput.addEventListener('change', e => { handleFiles(e.target.files, true); e.target.value=''; });
+
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+  const f = e.dataTransfer.files;
+  if (f.length) handleFiles(f, false);
+});
+
+// ===== MODAL =====
+function openModal() {
+  modalStatus.textContent = '';
+  modalStatus.className = 'modal-status';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+// ===== FILE HANDLING =====
+function handleFiles(files, fromModal) {
+  const csvFiles = Array.from(files).filter(f => f.name.match(/\.csv$/i));
+  if (!csvFiles.length) {
+    if (fromModal) setModalStatus('No CSV files found — try again', 'error');
+    return;
+  }
+  if (fromModal) setModalStatus('Reading ' + csvFiles.length + ' file' + (csvFiles.length > 1 ? 's' : '') + '…', '');
+
+  let done = 0, added = 0, dupes = 0;
+  csvFiles.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const ride = parseActivityCSV(e.target.result, f.name);
+      if (ride) {
+        const key = ride.name + '|' + ride.date;
+        if (!rides.find(r => r.name+'|'+r.date === key)) { rides.push(ride); added++; }
+        else dupes++;
+      }
+      done++;
+      if (done === csvFiles.length) {
+        saveRides();
+        renderDashboard();
+        if (fromModal) {
+          let msg = added + ' activit' + (added !== 1 ? 'ies' : 'y') + ' added';
+          if (dupes) msg += ' · ' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped';
+          setModalStatus(msg, 'success');
+        }
+      }
+    };
+    reader.readAsText(f);
+  });
+}
+
+function setModalStatus(msg, type) {
+  modalStatus.textContent = msg;
+  modalStatus.className = 'modal-status' + (type ? ' ' + type : '');
+}
+
+// ===== PARSE =====
+function parseActivityCSV(text, filename) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return null;
+
+  const headers = splitCSV(lines[0]);
+  const vals = splitCSV(lines[1]);
+  const row = {};
+  headers.forEach((h, i) => { row[h.trim()] = (vals[i]||'').trim(); });
+
+  const dataLines = lines.slice(3).filter(l => l.trim());
+  const timeSeries = { hr: [], speed: [], altitude: [], distance: [] };
+  dataLines.forEach((line, idx) => {
+    if (idx % 60 !== 0) return;
+    const cols = splitCSV(line);
+    const hr = parseFloat(cols[2]);
+    const spd = parseFloat(cols[3]);
+    const alt = parseFloat(cols[6]);
+    const dist = parseFloat(cols[8]);
+    if (!isNaN(hr) && hr > 0) timeSeries.hr.push(hr);
+    if (!isNaN(spd) && spd > 0) timeSeries.speed.push(spd);
+    if (!isNaN(alt)) timeSeries.altitude.push(alt);
+    if (!isNaN(dist)) timeSeries.distance.push(dist);
+  });
+
+  const name = row['Name'] || filename.replace(/\.csv$/i,'').replace(/_/g,' ');
+  const dateRaw = row['Date'] || '';
+  const sportRaw = (row['Sport'] || row['Activity type'] || row['Sport type'] || '').trim();
+  const sportKey = detectSport(sportRaw) || 'run'; // default to run if unknown
+
+  function durToSecs(s) {
+    if (!s) return 0;
+    const parts = s.split(':').map(Number);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return 0;
+  }
+
+  return {
+    name, date: dateRaw, sport: sportKey, sportRaw,
+    duration: durToSecs(row['Duration']),
+    distKm: parseFloat(row['Total distance (km)']) || 0,
+    avgHr: parseFloat(row['Average heart rate (bpm)']) || 0,
+    avgSpeed: parseFloat(row['Average speed (km/h)']) || 0,
+    maxSpeed: parseFloat(row['Max speed (km/h)']) || 0,
+    calories: parseFloat(row['Calories']) || 0,
+    ascent: parseFloat(row['Ascent (m)']) || 0,
+    descent: parseFloat(row['Descent (m)']) || 0,
+    trainingLoad: parseFloat(row['Training load']) || 0,
+    timeSeries, filename,
+  };
+}
+
+function splitCSV(line) {
+  const r = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQ = !inQ; }
+    else if (line[i] === ',' && !inQ) { r.push(cur); cur = ''; }
+    else cur += line[i];
+  }
+  r.push(cur);
+  return r;
+}
+
+// ===== PERSIST =====
+function saveRides() {
+  const slim = rides.map(({ timeSeries, ...r }) => r);
+  try { localStorage.setItem('gmt_rides', JSON.stringify(slim)); } catch(e) {}
+}
+
+function resetAll() {
+  if (!confirm('Clear all activity data and start fresh?')) return;
+  rides = [];
+  localStorage.removeItem('gmt_rides');
+  localStorage.removeItem('gmt_goals');
+  activeSport = ALL_KEY;
+  document.getElementById('drop-screen').classList.remove('hidden');
+  document.getElementById('dashboard').classList.remove('visible');
+  [trendChartInst, monthChartInst].forEach(c => { if(c) c.destroy(); });
+  trendChartInst = monthChartInst = null;
+}
+
+// ===== FILTERED RIDES =====
+function filteredRides() {
+  if (activeSport === ALL_KEY) return rides;
+  return rides.filter(r => r.sport === activeSport);
+}
+
+// ===== SPORT FILTER BAR =====
+function buildSportFilterBar() {
+  const bar = document.getElementById('sport-filter-bar');
+  const sportCounts = {};
+  rides.forEach(r => { sportCounts[r.sport] = (sportCounts[r.sport]||0)+1; });
+  
+  const total = rides.length;
+  let html = `<button class="sport-btn ${activeSport===ALL_KEY?'active':''}" 
+    style="--sport-color:#4a4a6a"
+    onclick="setSport('${ALL_KEY}')">
+    <div class="sport-dot"></div>All
+    <span class="sport-count-badge">${total}</span>
+  </button>`;
+
+  Object.entries(SPORTS).forEach(([key, def]) => {
+    const count = sportCounts[key] || 0;
+    if (count === 0) return;
+    html += `<button class="sport-btn ${activeSport===key?'active':''}" 
+      style="--sport-color:${def.color}"
+      onclick="setSport('${key}')">
+      <div class="sport-dot"></div>${def.icon} ${def.label}
+      <span class="sport-count-badge">${count}</span>
+    </button>`;
+  });
+  bar.innerHTML = html;
+}
+
+function setSport(key) {
+  activeSport = key;
+  currentTrendMetric = 'dist';
+  buildSportFilterBar();
+  buildGoals();
+  buildTrendChart('dist');
+  buildMonthChart();
+  buildSportBreakdown();
+  buildRideLog();
+  buildHeatmap();
+  updateKPIs();
+  buildPR();
+  // reset trend tab active state
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.textContent.trim() === 'Distance') t.classList.add('active');
+    else if (['Speed/Pace','Elevation','Heart rate','Calories'].includes(t.textContent.trim())) t.classList.remove('active');
+  });
+}
+
+// ===== RENDER =====
+function renderDashboard() {
+  if (!rides.length) return;
+  rides.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  const fr = filteredRides();
+  const totalActs = fr.length;
+  const dateStart = fr.length ? fr[0].date : '—';
+  const dateEnd = fr.length ? fr[fr.length-1].date : '—';
+
+  document.getElementById('h-title').textContent = 'Green Mountain Tracker';
+  document.getElementById('h-meta').textContent = rides.length + ' total activit' + (rides.length!==1?'ies':'y') + ' · ' + rides[0].date + ' → ' + rides[rides.length-1].date;
+
+  buildSportFilterBar();
+  updateKPIs();
+  buildTrendChart('dist');
+  buildMonthChart();
+  buildSportBreakdown();
+  buildRideLog();
+  buildGoals();
+  buildHeatmap();
+  buildPR();
+  buildCompareSelects();
+
+  document.getElementById('drop-screen').classList.add('hidden');
+  document.getElementById('dashboard').classList.add('visible');
+}
+
+function updateKPIs() {
+  const fr = filteredRides();
+  if (!fr.length) return;
+
+  const totalDist = fr.reduce((s,r) => s + r.distKm, 0);
+  const totalElev = fr.reduce((s,r) => s + r.ascent, 0);
+  const totalCal  = fr.reduce((s,r) => s + r.calories, 0);
+  const totalTime = fr.reduce((s,r) => s + r.duration, 0);
+  const avgSpeed  = fr.filter(r=>r.avgSpeed>0).reduce((s,r,_,a) => s + r.avgSpeed/a.length, 0);
+  const longestDist = Math.max(...fr.map(r=>r.distKm));
+  const avgHr = fr.filter(r=>r.avgHr>0).reduce((s,r,_,a) => s + r.avgHr/a.length, 0);
+
+  document.getElementById('ride-count-badge').textContent = fr.length + ' activit' + (fr.length!==1?'ies':'y');
+
+  const activeColor = activeSport === ALL_KEY ? '#4a4a6a' : sportColor(activeSport);
+
+  const kpis = [
+    {label:'Total distance', val: totalDist.toFixed(0)+' km', sub: (totalDist/1.60934).toFixed(0)+' miles', color: activeColor},
+    {label:'Total elevation', val: totalElev.toFixed(0)+' m', sub: (totalElev*3.28084).toFixed(0)+' ft gained', color:'#2a6f5e'},
+    {label:'Total time', val: Math.floor(totalTime/3600)+'h '+(Math.floor((totalTime%3600)/60))+'m', sub: (totalTime/60).toFixed(0)+' minutes total', color:'#3a7abf'},
+    {label:'Avg speed', val: avgSpeed.toFixed(1)+' km/h', sub: (avgSpeed/1.60934).toFixed(1)+' mph avg', color:'#8b6b3a'},
+    {label:'Avg heart rate', val: avgHr>0 ? Math.round(avgHr)+' bpm' : '—', sub: 'when recorded', color:'#8b3a3a'},
+    {label:'Calories burned', val: totalCal>=1000?(totalCal/1000).toFixed(1)+'k':totalCal.toFixed(0), sub: 'kcal total', color:'#4a3a8a'},
+  ];
+
+  const strip = document.getElementById('kpi-strip');
+  strip.innerHTML = '';
+  kpis.forEach(k => {
+    strip.innerHTML += `<div class="kpi-side" style="--kpi-color:${k.color}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`;
+  });
+}
+
+// ===== CHARTS =====
+function getChartOpts() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const tickColor = dark ? '#7a7269' : '#7a7269';
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: dark ? '#0e0c0a' : '#1a1714', titleColor: '#f5f2ee', bodyColor: '#a89e92', borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1, padding: 10 }
+    },
+    scales: {
+      x: { grid: { color: gridColor, drawBorder: false }, ticks: { color: tickColor, font: { family: 'Barlow Condensed', size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
+      y: { grid: { color: gridColor, drawBorder: false }, ticks: { color: tickColor, font: { family: 'Barlow Condensed', size: 11 } } }
+    }
+  };
+}
+const CHART_OPTS = {}; // legacy compat — use getChartOpts() in builds
+
+function activeColor() {
+  return activeSport === ALL_KEY ? '#4a4a6a' : sportColor(activeSport);
+}
+
+function buildTrendChart(metric) {
+  if (trendChartInst) trendChartInst.destroy();
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const fr = filteredRides();
+  if (!fr.length) return;
+
+  const metaMap = {
+    dist:  { key: 'distKm',   label: 'Distance (km)',     color: activeColor() },
+    speed: { key: 'avgSpeed', label: 'Avg speed (km/h)',   color: '#4a6fa5' },
+    elev:  { key: 'ascent',   label: 'Elevation gain (m)', color: '#2a6f5e' },
+    hr:    { key: 'avgHr',    label: 'Avg HR (bpm)',        color: '#8b3a3a' },
+    cal:   { key: 'calories', label: 'Calories',            color: '#8b3a6b' },
+  };
+  const m = metaMap[metric];
+  const labels = fr.map(r => r.date.slice(0,10));
+  const data   = fr.map(r => +r[m.key] || 0);
+  const avg3   = data.map((_, i) => {
+    const slice = data.slice(Math.max(0,i-2), i+1);
+    return Math.round(slice.reduce((s,v)=>s+v,0)/slice.length * 10)/10;
+  });
+
+  // Color bars by sport if showing all
+  const bgColors = fr.map(r => (sportColor(r.sport) + '55'));
+  const bColors  = fr.map(r => sportColor(r.sport));
+
+  trendChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { data, backgroundColor: activeSport===ALL_KEY ? bgColors : m.color+'44', borderColor: activeSport===ALL_KEY ? bColors : m.color, borderWidth: 1.5, borderRadius: 2, label: m.label },
+        { data: avg3, type: 'line', borderColor: m.color, borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, label: '3-activity avg' }
+      ]
+    },
+    options: { ...getChartOpts(), scales: { ...getChartOpts().scales, y: { ...getChartOpts().scales.y, title: { display: true, text: m.label, color: '#7a7269', font: { family: 'Barlow Condensed', size: 11 } } } } }
+  });
+}
+
+function buildMonthChart() {
+  if (monthChartInst) monthChartInst.destroy();
+  const fr = filteredRides();
+  if (!fr.length) return;
+  const ctx = document.getElementById('monthChart').getContext('2d');
+
+  const months = {};
+  fr.forEach(r => {
+    const k = r.date.slice(0,7);
+    months[k] = (months[k]||0) + r.distKm;
+  });
+  const keys = Object.keys(months).sort();
+  const ML = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+  const labels = keys.map(k => ML[k.slice(5)] + " '" + k.slice(2,4));
+  const data = keys.map(k => Math.round(months[k]*10)/10);
+  const c = activeColor();
+
+  monthChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: c+'55', borderColor: c, borderWidth: 1.5, borderRadius: 2 }] },
+    options: { ...getChartOpts(), scales: { ...getChartOpts().scales, y: { ...getChartOpts().scales.y, title: { display: true, text: 'km', color: '#7a7269', font: { family: 'Barlow Condensed', size: 11 } } } } }
+  });
+}
+
+function buildSportBreakdown() {
+  const wrap = document.getElementById('sport-breakdown-wrap');
+  const sportDist = {};
+  rides.forEach(r => {
+    sportDist[r.sport] = (sportDist[r.sport]||0) + r.distKm;
+  });
+  const total = Object.values(sportDist).reduce((s,v)=>s+v,0);
+  if (!total) { wrap.innerHTML = '<div class="empty-sub" style="padding:24px 0;text-align:center">No data</div>'; return; }
+
+  const sorted = Object.entries(sportDist).sort((a,b)=>b[1]-a[1]);
+  let html = '<div class="sport-breakdown">';
+  sorted.forEach(([key, dist]) => {
+    const pct = total > 0 ? Math.round(dist/total*100) : 0;
+    const count = rides.filter(r=>r.sport===key).length;
+    const c = sportColor(key);
+    html += `<div class="sport-breakdown-row">
+      <div class="sbd-label" style="color:${c}">${sportIcon(key)} ${sportLabel(key)}</div>
+      <div class="sbd-bar-track">
+        <div class="sbd-bar-fill" style="width:${pct}%;background:${c}"></div>
+      </div>
+      <div class="sbd-val">${dist.toFixed(0)} km</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);padding-left:82px;margin-top:-4px;margin-bottom:2px">${count} activit${count!==1?'ies':'y'} · ${pct}% of total</div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+// ===== SORT =====
+function setSort(btn, key) {
+  sortKey = key;
+  document.querySelectorAll('#sort-date,#sort-dist,#sort-elev,#sort-speed').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildRideLog();
+}
+
+function toggleSortDir() {
+  sortAsc = !sortAsc;
+  const btn = document.getElementById('sort-dir');
+  if (sortKey === 'date') {
+    btn.textContent = sortAsc ? '↑ Oldest' : '↓ Newest';
+  } else {
+    btn.textContent = sortAsc ? '↑ Low→High' : '↓ High→Low';
+  }
+  buildRideLog();
+}
+
+// ===== RIDE LOG =====
+function buildRideLog() {
+  const wrap = document.getElementById('ride-log-wrap');
+  const fr = filteredRides();
+  if (!fr.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-head">No activities' + (activeSport!==ALL_KEY?' for this sport':'') + '</div></div>';
+    return;
+  }
+
+  const sortFns = {
+    date:  (a,b) => new Date(a.date) - new Date(b.date),
+    dist:  (a,b) => a.distKm - b.distKm,
+    elev:  (a,b) => a.ascent - b.ascent,
+    speed: (a,b) => a.avgSpeed - b.avgSpeed,
+  };
+  const sorted = [...fr].sort(sortFns[sortKey] || sortFns.date);
+  if (!sortAsc) sorted.reverse();
+
+  const dirBtn = document.getElementById('sort-dir');
+  if (dirBtn) {
+    if (sortKey === 'date') dirBtn.textContent = sortAsc ? '↑ Oldest' : '↓ Newest';
+    else dirBtn.textContent = sortAsc ? '↑ Low→High' : '↓ High→Low';
+  }
+
+  const rows = sorted.map(r => {
+    const hrs = Math.floor(r.duration/3600);
+    const mins = Math.floor((r.duration%3600)/60);
+    const dur = hrs ? hrs+'h '+mins+'m' : mins+'m';
+    const key = encodeURIComponent(r.name + '|' + r.date);
+    const sc = sportColor(r.sport);
+    return `<tr>
+      <td>
+        <div class="ride-name">${r.name}</div>
+        <div class="ride-date">${r.date}</div>
+      </td>
+      <td><span class="sport-chip" style="background:${sc}">${sportIcon(r.sport)} ${sportLabel(r.sport)}</span></td>
+      <td><span class="stat-chip">${r.distKm.toFixed(1)} km</span></td>
+      <td>${dur}</td>
+      <td>${r.avgSpeed.toFixed(1)} km/h</td>
+      <td><span class="stat-chip elev-chip">↑ ${r.ascent.toFixed(0)}m</span></td>
+      <td>${r.avgHr > 0 ? '<span class="stat-chip hr-chip">♥ '+r.avgHr+' bpm</span>' : '—'}</td>
+      <td>${r.calories > 0 ? r.calories.toLocaleString()+' kcal' : '—'}</td>
+      <td><button class="delete-btn" onclick="deleteRide('${key}')" title="Remove this activity">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="ride-table">
+    <thead><tr>
+      <th>Activity</th><th>Sport</th><th>Distance</th><th>Duration</th>
+      <th>Avg speed</th><th>Elevation</th><th>Heart rate</th>
+      <th>Calories</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function deleteRide(encodedKey) {
+  const key = decodeURIComponent(encodedKey);
+  const idx = rides.findIndex(r => (r.name + '|' + r.date) === key);
+  if (idx === -1) return;
+  const r = rides[idx];
+  if (!confirm(`Remove this activity?\n\n${r.name} · ${r.date} · ${r.distKm.toFixed(1)}km`)) return;
+  rides.splice(idx, 1);
+  saveRides();
+  if (rides.length === 0) resetAll();
+  else renderDashboard();
+}
+
+function switchTrend(btn, metric) {
+  currentTrendMetric = metric;
+  document.querySelectorAll('.tab').forEach(t => {
+    if (['Distance','Speed/Pace','Elevation','Heart rate','Calories'].includes(t.textContent.trim())) t.classList.remove('active');
+  });
+  btn.classList.add('active');
+  buildTrendChart(metric);
+}
+
+// ===== PERSONAL RECORDS =====
+function secsToHm(s) {
+  if (!s) return '—';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h ? h+'h '+m+'m' : m+'m';
+}
+
+function buildPR() {
+  const fr = filteredRides();
+  const grid = document.getElementById('pr-grid');
+  const badge = document.getElementById('pr-sport-badge');
+  if (badge) badge.textContent = activeSport === ALL_KEY ? 'All sports' : (SPORTS[activeSport]?.label || activeSport);
+
+  if (!fr.length) { grid.innerHTML = '<div class="compare-placeholder">No activities yet</div>'; return; }
+
+  const withDist  = fr.filter(r => r.distKm > 0);
+  const withSpeed = fr.filter(r => r.avgSpeed > 0);
+  const withElev  = fr.filter(r => r.ascent > 0);
+  const withHr    = fr.filter(r => r.avgHr > 0);
+  const withCal   = fr.filter(r => r.calories > 0);
+  const withTime  = fr.filter(r => r.duration > 0);
+
+  function best(arr, key, higher = true) {
+    if (!arr.length) return null;
+    return arr.reduce((b, r) => (higher ? r[key] > b[key] : r[key] < b[key]) ? r : b);
+  }
+
+  const longestRide   = best(withDist, 'distKm');
+  const fastestRide   = best(withSpeed, 'avgSpeed');
+  const biggestClimb  = best(withElev, 'ascent');
+  const lowestHr      = best(withHr, 'avgHr', false);
+  const mostCals      = best(withCal, 'calories');
+  const longestTime   = best(withTime, 'duration');
+
+  const prs = [
+    longestRide  ? { trophy:'🏅', label:'Longest Distance', val: longestRide.distKm.toFixed(1)+' km', sub: longestRide.name+' · '+longestRide.date.slice(0,10), color: sportColor(longestRide.sport) } : null,
+    fastestRide  ? { trophy:'⚡', label:'Fastest Activity',  val: fastestRide.avgSpeed.toFixed(1)+' km/h', sub: fastestRide.name+' · '+fastestRide.date.slice(0,10), color: sportColor(fastestRide.sport) } : null,
+    biggestClimb ? { trophy:'⛰', label:'Most Elevation',    val: biggestClimb.ascent.toFixed(0)+' m', sub: biggestClimb.name+' · '+biggestClimb.date.slice(0,10), color: sportColor(biggestClimb.sport) } : null,
+    longestTime  ? { trophy:'⏱', label:'Longest Duration',  val: secsToHm(longestTime.duration), sub: longestTime.name+' · '+longestTime.date.slice(0,10), color: sportColor(longestTime.sport) } : null,
+    lowestHr     ? { trophy:'💚', label:'Lowest Avg HR',     val: Math.round(lowestHr.avgHr)+' bpm', sub: lowestHr.name+' · '+lowestHr.date.slice(0,10), color: '#2a8a5e' } : null,
+    mostCals     ? { trophy:'🔥', label:'Most Calories',     val: mostCals.calories.toLocaleString()+' kcal', sub: mostCals.name+' · '+mostCals.date.slice(0,10), color: '#8b3a6b' } : null,
+  ].filter(Boolean);
+
+  grid.innerHTML = prs.map(p => `
+    <div class="pr-card" style="--pr-color:${p.color}">
+      <span class="pr-trophy">${p.trophy}</span>
+      <div class="pr-label">${p.label}</div>
+      <div class="pr-val">${p.val}</div>
+      <div class="pr-sub" title="${p.sub}">${p.sub}</div>
+    </div>`).join('');
+}
+
+// ===== COMPARE =====
+function buildCompareSelects() {
+  const selA = document.getElementById('compare-a');
+  const selB = document.getElementById('compare-b');
+  if (!selA || !selB) return;
+  const prevA = selA.value, prevB = selB.value;
+  const opts = ['<option value="">— Select activity —</option>',
+    ...rides.map((r, i) => {
+      const label = `${r.date.slice(0,10)} · ${sportIcon(r.sport)} ${r.name} (${r.distKm.toFixed(1)} km)`;
+      return `<option value="${i}">${label}</option>`;
+    })
+  ].join('');
+  selA.innerHTML = opts;
+  selB.innerHTML = opts;
+  if (prevA) selA.value = prevA;
+  if (prevB) selB.value = prevB;
+}
+
+function openCompare() {
+  buildCompareSelects();
+  document.getElementById('compare-overlay').classList.add('open');
+  document.getElementById('compare-result').innerHTML = '<div class="compare-placeholder">Select two activities above to compare them side-by-side</div>';
+}
+function closeCompare() {
+  document.getElementById('compare-overlay').classList.remove('open');
+}
+function handleCompareOverlayClick(e) {
+  if (e.target === document.getElementById('compare-overlay')) closeCompare();
+}
+
+function runCompare() {
+  const ai = document.getElementById('compare-a').value;
+  const bi = document.getElementById('compare-b').value;
+  const result = document.getElementById('compare-result');
+  if (ai === '' || bi === '' || ai === bi) {
+    result.innerHTML = '<div class="compare-placeholder">Select two different activities to compare</div>';
+    return;
+  }
+  const a = rides[+ai], b = rides[+bi];
+
+  function fmtHr(v) { return v > 0 ? Math.round(v)+' bpm' : '—'; }
+  function fmtCal(v) { return v > 0 ? v.toLocaleString()+' kcal' : '—'; }
+
+  const metrics = [
+    { label: 'Distance',    va: a.distKm.toFixed(2)+' km',        vb: b.distKm.toFixed(2)+' km',        na: a.distKm,      nb: b.distKm,      higher: true },
+    { label: 'Duration',    va: secsToHm(a.duration),             vb: secsToHm(b.duration),             na: a.duration,    nb: b.duration,    higher: true },
+    { label: 'Avg Speed',   va: a.avgSpeed.toFixed(1)+' km/h',    vb: b.avgSpeed.toFixed(1)+' km/h',    na: a.avgSpeed,    nb: b.avgSpeed,    higher: true },
+    { label: 'Max Speed',   va: a.maxSpeed.toFixed(1)+' km/h',    vb: b.maxSpeed.toFixed(1)+' km/h',    na: a.maxSpeed,    nb: b.maxSpeed,    higher: true },
+    { label: 'Elevation ↑', va: a.ascent.toFixed(0)+' m',         vb: b.ascent.toFixed(0)+' m',         na: a.ascent,      nb: b.ascent,      higher: true },
+    { label: 'Avg HR',      va: fmtHr(a.avgHr),                   vb: fmtHr(b.avgHr),                   na: a.avgHr||0,    nb: b.avgHr||0,    higher: false },
+    { label: 'Calories',    va: fmtCal(a.calories),               vb: fmtCal(b.calories),               na: a.calories||0, nb: b.calories||0, higher: true },
+  ];
+
+  const ca = sportColor(a.sport), cb = sportColor(b.sport);
+
+  const rows = metrics.map(m => {
+    const aWins = m.higher ? m.na > m.nb : (m.na > 0 && m.na < m.nb);
+    const bWins = m.higher ? m.nb > m.na : (m.nb > 0 && m.nb < m.na);
+    const tie   = m.na === m.nb || (m.na === 0 && m.nb === 0);
+    return `<tr>
+      <td><span class="compare-metric">${m.label}</span></td>
+      <td class="${tie ? '' : aWins ? 'compare-winner' : 'compare-loser'}">${m.va}</td>
+      <td class="${tie ? '' : bWins ? 'compare-winner' : 'compare-loser'}">${m.vb}</td>
+    </tr>`;
+  }).join('');
+
+  // visual bars for key metrics
+  const barMetrics = [
+    { label: 'Distance', na: a.distKm, nb: b.distKm, unit: 'km' },
+    { label: 'Speed',    na: a.avgSpeed, nb: b.avgSpeed, unit: 'km/h' },
+    { label: 'Elevation',na: a.ascent, nb: b.ascent, unit: 'm' },
+  ];
+  const bars = barMetrics.map(m => {
+    const max = Math.max(m.na, m.nb, 0.01);
+    const pctA = Math.round(m.na / max * 100);
+    const pctB = Math.round(m.nb / max * 100);
+    return `<div style="margin-bottom:10px;">
+      <div style="font-family:var(--font-head);font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">${m.label}</div>
+      <div class="compare-bar-wrap">
+        <div class="compare-bar-label" style="color:${ca};text-align:right;font-size:9px;">${m.na.toFixed(1)} ${m.unit}</div>
+        <div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pctA}%;background:${ca}"></div></div>
+      </div>
+      <div class="compare-bar-wrap">
+        <div class="compare-bar-label" style="color:${cb};text-align:right;font-size:9px;">${m.nb.toFixed(1)} ${m.unit}</div>
+        <div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pctB}%;background:${cb}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  result.innerHTML = `
+    <table class="compare-table">
+      <thead><tr>
+        <th>Metric</th>
+        <th style="color:${ca}">${sportIcon(a.sport)} ${a.name.length > 22 ? a.name.slice(0,22)+'…' : a.name}</th>
+        <th style="color:${cb}">${sportIcon(b.sport)} ${b.name.length > 22 ? b.name.slice(0,22)+'…' : b.name}</th>
+      </tr>
+      <tr style="font-size:10px;color:var(--muted)">
+        <th></th>
+        <th style="font-weight:300;text-transform:none;letter-spacing:0">${a.date.slice(0,10)}</th>
+        <th style="font-weight:300;text-transform:none;letter-spacing:0">${b.date.slice(0,10)}</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-family:var(--font-head);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Visual comparison</div>
+      ${bars}
+    </div>`;
+}
+
+// ===== GOALS =====
+const GOAL_DEFAULTS = { dist: 500, elev: 10000, acts: 100 };
+let goals = JSON.parse(localStorage.getItem('gmt_goals') || JSON.stringify(GOAL_DEFAULTS));
+
+function saveGoals() {
+  try { localStorage.setItem('gmt_goals', JSON.stringify(goals)); } catch(e) {}
+}
+
+function buildGoals() {
+  const fr = filteredRides();
+  const totalDist = fr.reduce((s,r) => s + r.distKm, 0);
+  const totalElev = fr.reduce((s,r) => s + r.ascent, 0);
+  const totalActs = fr.length;
+  const c = activeColor();
+
+  const defs = [
+    { key:'dist', label:'Season distance', current: totalDist, unit:'km', color: c, fmt: v => v.toFixed(0) },
+    { key:'elev', label:'Season elevation', current: totalElev, unit:'m', color:'#2a6f5e', fmt: v => (+v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)) },
+    { key:'acts', label:'Total activities', current: totalActs, unit:'', color:'#3a7abf', fmt: v => v },
+  ];
+
+  const bar = document.getElementById('goal-bar');
+  bar.innerHTML = '';
+  defs.forEach(d => {
+    const target = goals[d.key] || GOAL_DEFAULTS[d.key];
+    const pct = Math.min(100, Math.round(d.current / target * 100));
+    const done = pct >= 100;
+    bar.innerHTML += `
+      <div class="goal-bar-card" style="--goal-color:${d.color}">
+        <div class="goal-bar-top">
+          <div class="goal-bar-label">${d.label}</div>
+          <div class="goal-bar-pct ${done?'done':''}">${done ? '✓ Done' : pct+'%'}</div>
+        </div>
+        <div class="goal-bar-numbers">
+          <div class="goal-bar-current">${d.fmt(d.current)}</div>
+          <div class="goal-bar-unit">${d.unit}</div>
+        </div>
+        <div class="goal-bar-track">
+          <div class="goal-bar-fill ${done?'done':''}" style="width:${pct}%"></div>
+        </div>
+        <div class="goal-bar-footer">
+          <div class="goal-bar-target-row">
+            <div class="goal-bar-target-label">Goal</div>
+            <input class="goal-bar-input" type="number" value="${target}" min="1"
+              onchange="updateGoal('${d.key}', this.value)" oninput="updateGoal('${d.key}', this.value)">
+            <div class="goal-bar-target-label">${d.unit || 'acts'}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+function updateGoal(key, val) {
+  const n = parseFloat(val);
+  if (!isNaN(n) && n > 0) { goals[key] = n; saveGoals(); buildGoals(); }
+}
+
+// ===== HEATMAP =====
+let hmYear = new Date().getFullYear();
+
+function buildHeatmap() {
+  const fr = filteredRides();
+  const dayCounts = {};
+  const dayColors = {};
+  fr.forEach(r => {
+    const d = r.date.slice(0,10);
+    dayCounts[d] = (dayCounts[d]||0) + 1;
+    dayColors[d] = sportColor(r.sport);
+  });
+
+  const years = [...new Set(rides.map(r => +r.date.slice(0,4)))].sort();
+  if (!years.includes(hmYear) && years.length) hmYear = years[years.length-1];
+
+  const ctrl = document.getElementById('heatmap-year-controls');
+  ctrl.innerHTML = years.map(y =>
+    `<button class="tab ${y===hmYear?'active':''}" onclick="hmYear=${y};buildHeatmap()">${y}</button>`
+  ).join('');
+
+  const wrap = document.getElementById('heatmap-wrap');
+  const jan1 = new Date(hmYear, 0, 1);
+  const dec31 = new Date(hmYear, 11, 31);
+  const startDow = (jan1.getDay() + 6) % 7;
+  const gridStart = new Date(jan1);
+  gridStart.setDate(jan1.getDate() - startDow);
+
+  const weeks = [];
+  const cur = new Date(gridStart);
+  while (cur <= dec31 || weeks.length < 53) {
+    const week = [];
+    for (let d = 0; d < 7; d++) { week.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+    weeks.push(week);
+    if (cur > dec31 && weeks.length >= 52) break;
+  }
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthPositions = {};
+  weeks.forEach((week, wi) => {
+    week.forEach(day => {
+      if (day.getFullYear() === hmYear && day.getDate() <= 7) {
+        const m = day.getMonth();
+        if (!(m in monthPositions)) monthPositions[m] = wi;
+      }
+    });
+  });
+
+  function intensity(dateStr) {
+    const c = dayCounts[dateStr] || 0;
+    return c === 0 ? 0 : c === 1 ? 1 : c === 2 ? 2 : c === 3 ? 3 : 4;
+  }
+
+  const cellSize = 13, gap = 3, unit = cellSize + gap;
+  let html = `<div style="display:flex;flex-direction:column;">`;
+  html += `<div style="display:flex;margin-left:22px;margin-bottom:4px;position:relative;height:14px;">`;
+  Object.entries(monthPositions).forEach(([m, wi]) => {
+    html += `<div style="position:absolute;left:${wi*unit}px;font-family:var(--font-head);font-size:10px;color:var(--muted);letter-spacing:0.05em;">${monthNames[+m]}</div>`;
+  });
+  html += `</div>`;
+  html += `<div style="display:flex;gap:0;">`;
+  html += `<div style="display:flex;flex-direction:column;gap:${gap}px;margin-right:4px;">`;
+  ['M','','W','','F','','S'].forEach(l => {
+    html += `<div style="height:${cellSize}px;width:14px;font-family:var(--font-head);font-size:9px;color:var(--muted);line-height:${cellSize}px;">${l}</div>`;
+  });
+  html += `</div>`;
+  html += `<div style="display:flex;gap:${gap}px;">`;
+  weeks.forEach(week => {
+    html += `<div style="display:flex;flex-direction:column;gap:${gap}px;">`;
+    week.forEach(day => {
+      const inYear = day.getFullYear() === hmYear;
+      const ds = day.toISOString().slice(0,10);
+      const lvl = inYear ? intensity(ds) : -1;
+      const count = dayCounts[ds] || 0;
+      const sportC = dayColors[ds];
+      const inlineColor = (inYear && count > 0 && activeSport === ALL_KEY) ? `background:${sportC};opacity:${0.3+lvl*0.18}` : '';
+      const cls = lvl < 0 ? 'heatmap-cell' : `heatmap-cell hm-${lvl}${count>0?' has-ride':''}`;
+      const label = inYear ? `${ds}${count ? ` · ${count} activit${count>1?'ies':'y'}` : ''}` : '';
+      html += `<div class="${cls}" style="${lvl<0?'opacity:0.2':''}${inlineColor}"
+        data-tip="${label}"
+        onmouseenter="showHmTip(event,'${label}')"
+        onmouseleave="hideHmTip()"></div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div></div>`;
+  wrap.innerHTML = html;
+}
+
+function showHmTip(e, text) {
+  if (!text) return;
+  const t = document.getElementById('hm-tooltip');
+  t.textContent = text;
+  t.style.opacity = '1';
+  t.style.left = (e.clientX + 12) + 'px';
+  t.style.top  = (e.clientY - 28) + 'px';
+}
+function hideHmTip() {
+  document.getElementById('hm-tooltip').style.opacity = '0';
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  closeModal();
+  closeCompare();
+});
+
+// ===== INIT =====
+if (rides.length) renderDashboard();
+</script>
+</body>
+</html>
