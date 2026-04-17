@@ -261,6 +261,37 @@ body::before {
 }
 .export-btn:hover { background: rgba(255,255,255,0.18); color: #f5f2ee; }
 
+.link-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 14px; border-radius: 2px; cursor: pointer;
+  border: none; transition: all 0.15s;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  line-height: 1;
+}
+.link-btn-strava { background: #fc4c02; color: white; }
+.link-btn-strava:hover { background: #e04400; color: white; }
+.link-btn-polar { background: #d0021b; color: white; }
+.link-btn-polar:hover { background: #b50018; color: white; }
+.link-btn svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
+
+/* Link settings modal */
+.link-settings-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.link-settings-label {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  min-width: 60px;
+}
+.link-settings-input {
+  flex: 1; font-family: var(--font-body); font-size: 13px;
+  background: var(--bg); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 3px; padding: 8px 10px;
+}
+.link-settings-input:focus { outline: none; border-color: var(--gravel); }
+.link-settings-input::placeholder { color: var(--muted); font-size: 12px; }
+
 /* ===== SPORT FILTER BAR ===== */
 .sport-filter-bar {
   background: var(--surface);
@@ -551,6 +582,7 @@ body::before {
   .header { padding: 12px 16px; }
   .header-right { gap: 6px; }
   .add-btn, .reset-btn, .export-btn { padding: 7px 10px; font-size: 10px; }
+  .link-btn { padding: 7px 10px; font-size: 10px; }
   .theme-btn { padding: 5px 8px; }
   .pr-grid { grid-template-columns: repeat(2, 1fr); }
   .compare-select-row { grid-template-columns: 1fr; }
@@ -563,6 +595,7 @@ body::before {
   .pr-grid { grid-template-columns: 1fr 1fr; }
   .goal-bar-current { font-size: 24px; }
   .header-logo { display: none; }
+  .link-btn span.link-label { display: none; }
 }
 </style>
 </head>
@@ -631,6 +664,14 @@ body::before {
     </div>
     <div class="header-right">
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle dark mode">🌙</button>
+      <a id="strava-link-btn" class="link-btn link-btn-strava" href="#" target="_blank" rel="noopener" onclick="handleLinkClick(event,'strava')" title="Open Strava">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        Strava
+      </a>
+      <a id="polar-link-btn" class="link-btn link-btn-polar" href="#" target="_blank" rel="noopener" onclick="handleLinkClick(event,'polar')" title="Open Polar Flow">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c4.418 0 8 3.582 8 8s-3.582 8-8 8-8-3.582-8-8 3.582-8 8-8zm0 3a5 5 0 100 10A5 5 0 0012 7zm0 2a3 3 0 110 6 3 3 0 010-6z"/></svg>
+        Polar
+      </a>
       <button class="export-btn" onclick="exportCSV()" title="Export all activities as CSV">↓ Export</button>
       <button class="add-btn" onclick="openModal()">+ Add activities</button>
       <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
@@ -749,6 +790,31 @@ body::before {
   </div>
 </div>
 
+<!-- LINK SETTINGS MODAL -->
+<div id="link-settings-overlay" onclick="handleLinkSettingsOverlayClick(event)" style="display:none;position:fixed;inset:0;background:rgba(10,9,8,0.65);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;">
+  <div class="modal" style="width:460px;">
+    <div class="modal-header">
+      <div class="modal-title" id="link-settings-title">Set Strava URL</div>
+      <button class="modal-close" onclick="closeLinkSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="link-settings-row">
+        <div class="link-settings-label" id="link-settings-label">URL</div>
+        <input class="link-settings-input" id="link-settings-input" type="url"
+          placeholder="https://www.strava.com/athletes/you"
+          onkeydown="if(event.key==='Enter') saveLinkSettings()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:-6px;padding-left:70px;" id="link-settings-hint">
+        Paste your profile or dashboard URL
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-hint">Link opens in a new tab</div>
+      <button class="modal-done-btn" onclick="saveLinkSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- COMPARE MODAL -->
 <div id="compare-overlay" onclick="handleCompareOverlayClick(event)">
   <div class="compare-modal">
@@ -810,6 +876,97 @@ let activeSport = ALL_KEY;
 let sortKey = 'date';
 let sortAsc = false;
 let currentTrendMetric = 'dist';
+
+// ===== EXTERNAL LINKS =====
+let currentLinkTarget = null;
+
+const LINK_CONFIG = {
+  strava: {
+    title: 'Set Strava URL',
+    label: 'Strava',
+    placeholder: 'https://www.strava.com/athletes/yourname',
+    hint: 'Your Strava profile or dashboard URL',
+    storageKey: 'gmt_link_strava',
+    defaultUrl: 'https://www.strava.com',
+  },
+  polar: {
+    title: 'Set Polar Flow URL',
+    label: 'Polar',
+    placeholder: 'https://flow.polar.com',
+    hint: 'Your Polar Flow dashboard URL',
+    storageKey: 'gmt_link_polar',
+    defaultUrl: 'https://flow.polar.com',
+  },
+};
+
+function loadLinkButtons() {
+  for (const [key, cfg] of Object.entries(LINK_CONFIG)) {
+    const saved = localStorage.getItem(cfg.storageKey);
+    const btn = document.getElementById(key + '-link-btn');
+    if (btn) btn.href = saved || cfg.defaultUrl;
+  }
+}
+
+function handleLinkClick(e, key) {
+  const saved = localStorage.getItem(LINK_CONFIG[key].storageKey);
+  if (!saved) {
+    // No URL set yet — open settings instead of navigating
+    e.preventDefault();
+    openLinkSettings(key);
+  }
+  // If URL is set, let the <a> navigate normally
+}
+
+function openLinkSettings(key) {
+  currentLinkTarget = key;
+  const cfg = LINK_CONFIG[key];
+  const saved = localStorage.getItem(cfg.storageKey) || '';
+  document.getElementById('link-settings-title').textContent = cfg.title;
+  document.getElementById('link-settings-label').textContent = cfg.label;
+  document.getElementById('link-settings-input').placeholder = cfg.placeholder;
+  document.getElementById('link-settings-input').value = saved;
+  document.getElementById('link-settings-hint').textContent = cfg.hint;
+  const overlay = document.getElementById('link-settings-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => document.getElementById('link-settings-input').focus(), 50);
+}
+
+function closeLinkSettings() {
+  document.getElementById('link-settings-overlay').style.display = 'none';
+  currentLinkTarget = null;
+}
+
+function handleLinkSettingsOverlayClick(e) {
+  if (e.target === document.getElementById('link-settings-overlay')) closeLinkSettings();
+}
+
+function saveLinkSettings() {
+  if (!currentLinkTarget) return;
+  const cfg = LINK_CONFIG[currentLinkTarget];
+  let val = document.getElementById('link-settings-input').value.trim();
+  if (val && !val.startsWith('http')) val = 'https://' + val;
+  if (val) {
+    localStorage.setItem(cfg.storageKey, val);
+    const btn = document.getElementById(currentLinkTarget + '-link-btn');
+    if (btn) btn.href = val;
+  }
+  closeLinkSettings();
+  // If they just saved, open the link
+  if (val) window.open(val, '_blank', 'noopener');
+}
+
+// Long-press / right-click to re-edit a link that's already set
+['strava', 'polar'].forEach(key => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById(key + '-link-btn');
+    if (!btn) return;
+    let pressTimer;
+    btn.addEventListener('contextmenu', e => { e.preventDefault(); openLinkSettings(key); });
+    btn.addEventListener('mousedown', () => { pressTimer = setTimeout(() => openLinkSettings(key), 600); });
+    btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    btn.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+  });
+});
 
 // ===== DASHBOARD TITLE =====
 function saveDashboardTitle(el) {
@@ -1913,9 +2070,11 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   closeModal();
   closeCompare();
+  closeLinkSettings();
 });
 
 // ===== INIT =====
+loadLinkButtons();
 loadDashboardTitle();
 if (rides.length) renderDashboard();
 </script>
