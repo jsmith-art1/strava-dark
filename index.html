@@ -523,6 +523,44 @@ body::before {
 }
 .delete-btn:hover { background: #fde8e8; color: #c0392b; opacity: 1; }
 
+.note-btn {
+  background: transparent; border: none; color: var(--muted);
+  cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 2px;
+  opacity: 0.45; transition: all 0.12s; line-height: 1;
+}
+.note-btn:hover { background: var(--tag); color: var(--text); opacity: 1; }
+.note-btn.has-note { opacity: 1; color: var(--gravel); }
+
+.note-row td {
+  padding: 0 10px 10px 10px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.note-row.hidden { display: none; }
+.note-editor {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--bg); border-radius: 3px;
+  padding: 8px 10px; border: 1px solid var(--border2);
+}
+.note-textarea {
+  flex: 1; background: transparent; border: none; outline: none; resize: none;
+  font-family: var(--font-body); font-size: 12px; font-weight: 300;
+  color: var(--text); line-height: 1.55; min-height: 36px; max-height: 120px;
+}
+.note-textarea::placeholder { color: var(--muted); font-style: italic; }
+.note-save-btn {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 2px; cursor: pointer;
+  background: var(--gravel); color: white; border: none;
+  transition: background 0.15s; white-space: nowrap; align-self: flex-end;
+}
+.note-save-btn:hover { background: #a84e22; }
+.note-preview {
+  font-size: 11px; color: var(--muted); font-style: italic;
+  margin-top: 2px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 240px;
+}
+
 .empty { padding: 48px 24px; text-align: center; }
 .empty-head { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--muted); }
 .empty-sub { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 300; }
@@ -1514,6 +1552,8 @@ function resetAll() {
   localStorage.removeItem('gmt_goals');
   localStorage.removeItem('gmt_title');
   localStorage.removeItem('gmt_photos');
+  localStorage.removeItem('gmt_notes');
+  notes = {};
   photos = [];
   renderGallery();
   activeSport = ALL_KEY;
@@ -1803,11 +1843,16 @@ function buildRideLog() {
     const mins = Math.floor((r.duration%3600)/60);
     const dur = hrs ? hrs+'h '+mins+'m' : mins+'m';
     const key = encodeURIComponent(r.name + '|' + r.date);
+    const rawKey = r.name + '|' + r.date;
     const sc = sportColor(r.sport);
+    const note = notes[rawKey] || '';
+    const hasNote = note.length > 0;
+    const noteRowId = 'note-row-' + btoa(encodeURIComponent(rawKey)).replace(/[^a-zA-Z0-9]/g,'').slice(0,16);
     return `<tr>
       <td>
         <div class="ride-name">${r.name}</div>
         <div class="ride-date">${r.date}</div>
+        ${hasNote ? `<div class="note-preview">💬 ${note.replace(/</g,'&lt;')}</div>` : ''}
       </td>
       <td><span class="sport-chip" style="background:${sc}">${sportIcon(r.sport)} ${sportLabel(r.sport)}</span></td>
       <td><span class="stat-chip">${r.distKm.toFixed(1)} km</span></td>
@@ -1816,7 +1861,18 @@ function buildRideLog() {
       <td><span class="stat-chip elev-chip">↑ ${r.ascent.toFixed(0)}m</span></td>
       <td>${r.avgHr > 0 ? '<span class="stat-chip hr-chip">♥ '+r.avgHr+' bpm</span>' : '—'}</td>
       <td>${r.calories > 0 ? r.calories.toLocaleString()+' kcal' : '—'}</td>
-      <td><button class="delete-btn" onclick="deleteRide('${key}')" title="Remove this activity">✕</button></td>
+      <td style="white-space:nowrap">
+        <button class="note-btn ${hasNote?'has-note':''}" onclick="toggleNoteRow('${noteRowId}','${key}')" title="${hasNote?'Edit note':'Add note'}">💬</button>
+        <button class="delete-btn" onclick="deleteRide('${key}')" title="Remove this activity">✕</button>
+      </td>
+    </tr>
+    <tr class="note-row hidden" id="${noteRowId}">
+      <td colspan="9">
+        <div class="note-editor">
+          <textarea class="note-textarea" id="ta-${noteRowId}" placeholder="Add a note about this activity…" rows="2">${note.replace(/</g,'&lt;')}</textarea>
+          <button class="note-save-btn" onclick="saveNote('${key}','${noteRowId}')">Save</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 
@@ -1828,18 +1884,6 @@ function buildRideLog() {
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
-}
-
-function deleteRide(encodedKey) {
-  const key = decodeURIComponent(encodedKey);
-  const idx = rides.findIndex(r => (r.name + '|' + r.date) === key);
-  if (idx === -1) return;
-  const r = rides[idx];
-  if (!confirm(`Remove this activity?\n\n${r.name} · ${r.date} · ${r.distKm.toFixed(1)}km`)) return;
-  rides.splice(idx, 1);
-  saveRides();
-  if (rides.length === 0) resetAll();
-  else renderDashboard();
 }
 
 function switchTrend(btn, metric) {
@@ -2010,6 +2054,56 @@ function runCompare() {
       <div style="font-family:var(--font-head);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Visual comparison</div>
       ${bars}
     </div>`;
+}
+
+// ===== NOTES =====
+let notes = JSON.parse(localStorage.getItem('gmt_notes') || '{}');
+// notes = { "ActivityName|Date": "note text" }
+
+function saveNotes() {
+  try { localStorage.setItem('gmt_notes', JSON.stringify(notes)); } catch(e) {}
+}
+
+function toggleNoteRow(rowId, encodedKey) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  const isHidden = row.classList.contains('hidden');
+  // Close any other open note rows first
+  document.querySelectorAll('.note-row:not(.hidden)').forEach(r => r.classList.add('hidden'));
+  if (isHidden) {
+    row.classList.remove('hidden');
+    const ta = document.getElementById('ta-' + rowId);
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+}
+
+function saveNote(encodedKey, rowId) {
+  const key = decodeURIComponent(encodedKey);
+  const ta = document.getElementById('ta-' + rowId);
+  if (!ta) return;
+  const val = ta.value.trim();
+  if (val) notes[key] = val;
+  else delete notes[key];
+  saveNotes();
+  // Close the row and rebuild the log to update preview + button color
+  const row = document.getElementById(rowId);
+  if (row) row.classList.add('hidden');
+  buildRideLog();
+}
+
+// Also clear notes when an activity is deleted
+function deleteRide(encodedKey) {
+  const key = decodeURIComponent(encodedKey);
+  const idx = rides.findIndex(r => (r.name + '|' + r.date) === key);
+  if (idx === -1) return;
+  const r = rides[idx];
+  if (!confirm(`Remove this activity?\n\n${r.name} · ${r.date} · ${r.distKm.toFixed(1)}km`)) return;
+  delete notes[key];
+  saveNotes();
+  rides.splice(idx, 1);
+  saveRides();
+  if (rides.length === 0) resetAll();
+  else renderDashboard();
 }
 
 // ===== GOALS =====
@@ -2268,6 +2362,17 @@ document.addEventListener('keydown', e => {
 });
 
 // (photos cleared in resetAll directly)
+
+// Ctrl+Enter saves note from textarea
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' && (e.ctrlKey || e.metaKey)) && e.target.classList.contains('note-textarea')) {
+    const ta = e.target;
+    const rowId = ta.id.replace('ta-', '');
+    // Find the save button in the same note-editor
+    const saveBtn = ta.closest('.note-editor')?.querySelector('.note-save-btn');
+    if (saveBtn) saveBtn.click();
+  }
+});
 
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
