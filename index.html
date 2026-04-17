@@ -604,7 +604,97 @@ body::before {
 [data-theme="dark"] .compare-modal { background: #1a1714; }
 [data-theme="dark"] .compare-header { background: #1a1714; }
 
-/* ===== PHOTO GALLERY ===== */
+/* ===== FITNESS TREND SCORE ===== */
+.fitness-panel {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 0; align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.fitness-score-block {
+  padding: 18px 24px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative;
+}
+.fitness-score-block::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+  width: 3px; background: var(--fitness-color, var(--gravel));
+}
+.fitness-score-eyebrow {
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.fitness-score-val {
+  font-family: var(--font-head); font-size: 38px; font-weight: 700;
+  line-height: 1; color: var(--fitness-color, var(--text));
+}
+.fitness-score-delta {
+  font-family: var(--font-head); font-size: 12px; font-weight: 600;
+  margin-top: 3px;
+}
+.fitness-score-delta.up   { color: #1e7a5e; }
+.fitness-score-delta.down { color: #8b3a3a; }
+.fitness-score-delta.flat { color: var(--muted); }
+
+.fitness-metric-block {
+  padding: 14px 20px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.fitness-metric-label {
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 4px;
+}
+.fitness-metric-val {
+  font-family: var(--font-head); font-size: 22px; font-weight: 700;
+  line-height: 1; color: var(--text);
+}
+.fitness-metric-sub {
+  font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 300;
+}
+.fitness-form-block {
+  padding: 14px 22px;
+  display: flex; flex-direction: column; justify-content: center;
+  min-width: 120px;
+}
+.fitness-form-bar-track {
+  height: 6px; background: var(--surface2); border-radius: 3px;
+  overflow: visible; margin-top: 8px; position: relative;
+}
+.fitness-form-bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+  position: absolute; top: 0;
+}
+.fitness-status-badge {
+  display: inline-block; margin-top: 5px;
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 2px;
+  background: var(--tag); color: var(--muted);
+}
+.fitness-status-badge.peak    { background: #deeee9; color: #1e7a5e; }
+.fitness-status-badge.fresh   { background: #ddeaf8; color: #2e7dd4; }
+.fitness-status-badge.optimal { background: #e8f4e8; color: #2d7a2d; }
+.fitness-status-badge.tired   { background: #f5e8de; color: #c45e28; }
+.fitness-status-badge.deep    { background: #f0e8e8; color: #8b3a3a; }
+
+.fitness-sparkline { flex: 1; padding: 10px 16px; display: flex; align-items: center; }
+.fitness-sparkline canvas { width: 100% !important; height: 52px !important; }
+
+@media (max-width: 768px) {
+  .fitness-panel { grid-template-columns: 1fr 1fr; }
+  .fitness-sparkline { display: none; }
+  .fitness-form-block { border-right: none; }
+}
+
 .gallery-drop-zone {
   border: 1.5px dashed var(--border2);
   border-radius: 4px; padding: 28px 32px;
@@ -798,6 +888,33 @@ body::before {
   <div class="sport-filter-bar" id="sport-filter-bar"></div>
 
   <div class="main">
+
+    <!-- FITNESS TREND -->
+    <div class="fitness-panel" id="fitness-panel" style="display:none">
+      <div class="fitness-score-block" id="fitness-score-block">
+        <div class="fitness-score-eyebrow">Fitness Score</div>
+        <div class="fitness-score-val" id="fitness-score-val">—</div>
+        <div class="fitness-score-delta" id="fitness-score-delta"></div>
+      </div>
+      <div class="fitness-metric-block">
+        <div class="fitness-metric-label">Fitness (CTL)</div>
+        <div class="fitness-metric-val" id="fitness-ctl">—</div>
+        <div class="fitness-metric-sub">42-day base</div>
+      </div>
+      <div class="fitness-metric-block">
+        <div class="fitness-metric-label">Fatigue (ATL)</div>
+        <div class="fitness-metric-val" id="fitness-atl">—</div>
+        <div class="fitness-metric-sub">7-day load</div>
+      </div>
+      <div class="fitness-form-block">
+        <div class="fitness-metric-label">Form (TSB)</div>
+        <div class="fitness-metric-val" id="fitness-tsb">—</div>
+        <div id="fitness-status-badge" class="fitness-status-badge"></div>
+      </div>
+      <div class="fitness-sparkline">
+        <canvas id="fitnessSparkline"></canvas>
+      </div>
+    </div>
 
     <!-- GOAL BAR -->
     <div class="goal-bar" id="goal-bar"></div>
@@ -1137,6 +1254,7 @@ function toggleTheme() {
   if (trendChartInst || monthChartInst) {
     buildTrendChart(currentTrendMetric);
     buildMonthChart();
+    buildFitnessScore();
   }
 }
 
@@ -1559,8 +1677,8 @@ function resetAll() {
   activeSport = ALL_KEY;
   document.getElementById('drop-screen').classList.remove('hidden');
   document.getElementById('dashboard').classList.remove('visible');
-  [trendChartInst, monthChartInst].forEach(c => { if(c) c.destroy(); });
-  trendChartInst = monthChartInst = null;
+  [trendChartInst, monthChartInst, fitnessSparkInst].forEach(c => { if(c) c.destroy(); });
+  trendChartInst = monthChartInst = fitnessSparkInst = null;
 }
 
 // ===== FILTERED RIDES =====
@@ -1601,6 +1719,7 @@ function setSport(key) {
   currentTrendMetric = 'dist';
   buildSportFilterBar();
   buildGoals();
+  buildFitnessScore();
   buildTrendChart('dist');
   buildMonthChart();
   buildSportBreakdown();
@@ -1633,6 +1752,7 @@ function renderDashboard() {
 
   buildSportFilterBar();
   updateKPIs();
+  buildFitnessScore();
   buildTrendChart('dist');
   buildMonthChart();
   buildSportBreakdown();
@@ -2104,6 +2224,159 @@ function deleteRide(encodedKey) {
   saveRides();
   if (rides.length === 0) resetAll();
   else renderDashboard();
+}
+
+// ===== FITNESS TREND SCORE =====
+// Simplified CTL/ATL/TSB model
+// CTL = 42-day exp weighted avg of daily training load (fitness)
+// ATL = 7-day  exp weighted avg of daily training load (fatigue)
+// TSB = CTL - ATL (form — positive=fresh, negative=tired)
+// Training Load per activity = duration_hours * intensity_factor * 100
+// intensity_factor: HR-based (% of HRmax) if available, else speed-based, else 0.65 default
+
+const HR_MAX = 190; // reasonable default; could be made configurable
+
+function calcTrainingLoad(ride) {
+  const hours = ride.duration / 3600;
+  if (hours < 0.05) return 0; // ignore sub-3min activities
+
+  let intensity = 0.65; // default moderate
+
+  if (ride.avgHr > 0) {
+    // HR-based intensity: % of HRmax, mapped to 0.4–1.05
+    const hrPct = ride.avgHr / HR_MAX;
+    intensity = Math.max(0.4, Math.min(1.05, hrPct * 1.1));
+  } else if (ride.avgSpeed > 0) {
+    // Speed-based: normalise against a rough reference (20 km/h = 0.75)
+    intensity = Math.max(0.4, Math.min(1.0, ride.avgSpeed / 26));
+  }
+
+  return Math.round(hours * intensity * 100);
+}
+
+function buildFitnessScore() {
+  const fr = filteredRides();
+  const panel = document.getElementById('fitness-panel');
+  if (!fr.length) { if (panel) panel.style.display = 'none'; return; }
+  if (panel) panel.style.display = 'grid';
+
+  // Build a date-keyed map of total daily load
+  const dailyLoad = {};
+  fr.forEach(r => {
+    const d = r.date.slice(0, 10);
+    dailyLoad[d] = (dailyLoad[d] || 0) + calcTrainingLoad(r);
+  });
+
+  // Build sorted date range from first activity to today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const allDates = Object.keys(dailyLoad).sort();
+  const startDate = new Date(allDates[0]);
+
+  // Walk day by day from start to today building CTL & ATL
+  const kCTL = 2 / (42 + 1); // exp decay constant for 42-day window
+  const kATL = 2 / (7  + 1); // exp decay constant for 7-day window
+
+  let ctl = 0, atl = 0;
+  const history = []; // [{date, ctl, atl, tsb, load}]
+
+  for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+    const ds = d.toISOString().slice(0, 10);
+    const load = dailyLoad[ds] || 0;
+    ctl = ctl + kCTL * (load - ctl);
+    atl = atl + kATL * (load - atl);
+    history.push({ date: ds, ctl: +ctl.toFixed(1), atl: +atl.toFixed(1), tsb: +(ctl - atl).toFixed(1), load });
+  }
+
+  const current = history[history.length - 1];
+  const weekAgo  = history[Math.max(0, history.length - 8)]; // 7 days back
+  const ctlDelta = +(current.ctl - weekAgo.ctl).toFixed(1);
+  const tsb = current.tsb;
+
+  // Status label based on TSB
+  let status, statusClass;
+  if      (tsb > 15)              { status = '⚡ Peak form';    statusClass = 'peak'; }
+  else if (tsb > 5)               { status = '✓ Fresh';         statusClass = 'fresh'; }
+  else if (tsb >= -10 && tsb < 5) { status = '● Optimal load'; statusClass = 'optimal'; }
+  else if (tsb >= -25)            { status = '⚠ Tired';         statusClass = 'tired'; }
+  else                            { status = '▼ Deep fatigue';  statusClass = 'deep'; }
+
+  // Score = CTL (rounded), colour by trend
+  const scoreColor = ctlDelta > 0.5 ? '#1e7a5e' : ctlDelta < -0.5 ? '#8b3a3a' : '#4a4a6a';
+
+  document.getElementById('fitness-score-val').textContent = Math.round(current.ctl);
+  document.getElementById('fitness-score-block').style.setProperty('--fitness-color', scoreColor);
+  document.getElementById('fitness-score-val').style.color = scoreColor;
+
+  const deltaEl = document.getElementById('fitness-score-delta');
+  if (Math.abs(ctlDelta) < 0.1) {
+    deltaEl.textContent = '→ Holding steady';
+    deltaEl.className = 'fitness-score-delta flat';
+  } else {
+    deltaEl.textContent = (ctlDelta > 0 ? '↑ +' : '↓ ') + ctlDelta + ' this week';
+    deltaEl.className = 'fitness-score-delta ' + (ctlDelta > 0 ? 'up' : 'down');
+  }
+
+  document.getElementById('fitness-ctl').textContent = Math.round(current.ctl);
+  document.getElementById('fitness-atl').textContent = Math.round(current.atl);
+  document.getElementById('fitness-tsb').textContent = (tsb > 0 ? '+' : '') + Math.round(tsb);
+
+  const badge = document.getElementById('fitness-status-badge');
+  badge.textContent = status;
+  badge.className = 'fitness-status-badge ' + statusClass;
+
+  // Sparkline — last 8 weeks of CTL
+  buildFitnessSparkline(history);
+}
+
+let fitnessSparkInst = null;
+
+function buildFitnessSparkline(history) {
+  if (fitnessSparkInst) { fitnessSparkInst.destroy(); fitnessSparkInst = null; }
+  const ctx = document.getElementById('fitnessSparkline');
+  if (!ctx) return;
+
+  // Sample weekly — last 12 weeks
+  const weeks = [];
+  for (let i = 11; i >= 0; i--) {
+    const idx = Math.max(0, history.length - 1 - i * 7);
+    weeks.push(history[idx]);
+  }
+  weeks.push(history[history.length - 1]); // always include today
+
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const lineColor = '#2e7dd4';
+  const fillColor = dark ? 'rgba(46,125,212,0.15)' : 'rgba(46,125,212,0.1)';
+
+  fitnessSparkInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: weeks.map(w => w.date.slice(5)),
+      datasets: [{
+        data: weeks.map(w => +w.ctl.toFixed(1)),
+        borderColor: lineColor,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: fillColor,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: dark ? '#0e0c0a' : '#1a1714',
+        titleColor: '#f5f2ee', bodyColor: '#a89e92',
+        padding: 8, borderWidth: 0,
+        callbacks: { title: items => items[0].label, label: items => 'Fitness: ' + items.raw }
+      }},
+      scales: {
+        x: { display: false },
+        y: { display: false, min: 0 }
+      }
+    }
+  });
 }
 
 // ===== GOALS =====
