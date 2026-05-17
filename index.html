@@ -900,6 +900,100 @@ body::before {
   font-size: 11px; color: var(--muted); font-style: italic;
 }
 
+/* ===== GEAR ===== */
+.gear-panel { margin-bottom: 20px; }
+
+.gear-add-form {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 16px; background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  align-items: flex-end;
+}
+.gear-input {
+  font-family: var(--font-body); font-size: 13px;
+  background: var(--surface); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 3px; padding: 7px 10px;
+  transition: border-color 0.15s; flex: 1; min-width: 120px;
+}
+.gear-input:focus { outline: none; border-color: var(--gravel); }
+.gear-input::placeholder { color: var(--muted); }
+.gear-select {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; background: var(--surface);
+  border: 1px solid var(--border2); color: var(--text);
+  border-radius: 3px; padding: 7px 10px; cursor: pointer;
+  flex-shrink: 0;
+}
+.gear-select:focus { outline: none; border-color: var(--gravel); }
+.gear-add-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 2px; cursor: pointer;
+  background: var(--gravel); color: white; border: none;
+  transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.gear-add-btn:hover { background: #a84e22; }
+
+.gear-list { padding: 8px 0; }
+.gear-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto auto;
+  align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.gear-item:last-child { border-bottom: none; }
+.gear-item:hover { background: var(--surface2); }
+.gear-icon { font-size: 18px; text-align: center; }
+.gear-info { min-width: 0; }
+.gear-name {
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  color: var(--text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gear-meta { font-size: 11px; color: var(--muted); font-weight: 300; margin-top: 1px; }
+.gear-odometer {
+  text-align: right; flex-shrink: 0;
+}
+.gear-odo-val {
+  font-family: var(--font-head); font-size: 17px; font-weight: 700;
+  color: var(--text); line-height: 1;
+}
+.gear-odo-label { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.gear-odo-bar-track {
+  width: 80px; height: 4px; background: var(--surface2);
+  border-radius: 2px; margin-top: 5px; overflow: hidden;
+}
+.gear-odo-bar-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+.gear-delete-btn {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 14px; padding: 4px 6px;
+  border-radius: 2px; transition: all 0.12s; opacity: 0.4;
+  flex-shrink: 0;
+}
+.gear-item:hover .gear-delete-btn { opacity: 1; }
+.gear-delete-btn:hover { background: var(--tag); color: #8b3a3a; }
+
+.gear-empty {
+  text-align: center; padding: 28px;
+  font-size: 13px; color: var(--muted); font-style: italic;
+}
+
+/* Gear dropdown in ride log */
+.gear-assign-select {
+  font-family: var(--font-head); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; background: var(--tag);
+  border: 1px solid var(--border); color: var(--muted);
+  border-radius: 2px; padding: 3px 6px; cursor: pointer;
+  max-width: 120px;
+}
+.gear-assign-select:focus { outline: none; border-color: var(--gravel); }
+.gear-assign-select.assigned { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
 .footer {
   padding: 24px 0 8px;
   text-align: center;
@@ -1109,6 +1203,32 @@ body::before {
           </div>
           <div class="pb-table-wrap">
             <div id="pb-table-body"></div>
+          </div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <!-- Gear Tracker -->
+        <div class="panel gear-panel">
+          <div class="panel-header">
+            <div class="panel-title">🚲 My Gear</div>
+            <div class="panel-badge" id="gear-count-badge">0 items</div>
+          </div>
+          <div class="gear-add-form">
+            <input class="gear-input" id="gear-name-input" placeholder="Gear name (e.g. Trek Émonda SL6)">
+            <select class="gear-select" id="gear-type-select">
+              <option value="road">🚴 Road bike</option>
+              <option value="gravel">🚵 Gravel bike</option>
+              <option value="mtb">🚵 MTB</option>
+              <option value="shoes">👟 Shoes</option>
+              <option value="skis">⛷ Skis</option>
+              <option value="other">📦 Other</option>
+            </select>
+            <input class="gear-input" id="gear-date-input" type="date" style="max-width:150px" title="Purchase date (optional)">
+            <button class="gear-add-btn" onclick="addGear()">+ Add gear</button>
+          </div>
+          <div class="gear-list" id="gear-list">
+            <div class="gear-empty">No gear yet — add your bikes, shoes, and skis above</div>
           </div>
         </div>
 
@@ -1817,6 +1937,9 @@ function resetAll() {
   localStorage.removeItem('gmt_photos');
   localStorage.removeItem('gmt_notes');
   localStorage.removeItem('gmt_milestones_seen');
+  localStorage.removeItem('gmt_gear');
+  localStorage.removeItem('gmt_activity_gear');
+  gear = []; activityGear = {};
   notes = {};
   photos = [];
   renderGallery();
@@ -1908,6 +2031,7 @@ function renderDashboard() {
   buildHeatmap();
   buildPR();
   buildPBTable();
+  buildGearList();
   buildCompareSelects();
   checkMilestones();
 
@@ -2107,6 +2231,10 @@ function buildRideLog() {
     else dirBtn.textContent = sortAsc ? '↑ Low→High' : '↓ High→Low';
   }
 
+  // Build gear options html once
+  const gearOpts = '<option value="">— no gear —</option>' +
+    gear.map(g => `<option value="${g.id}">${GEAR_TYPES[g.type]?.icon||'📦'} ${g.name}</option>`).join('');
+
   const rows = sorted.map(r => {
     const hrs = Math.floor(r.duration/3600);
     const mins = Math.floor((r.duration%3600)/60);
@@ -2117,6 +2245,8 @@ function buildRideLog() {
     const note = notes[rawKey] || '';
     const hasNote = note.length > 0;
     const noteRowId = 'note-row-' + btoa(encodeURIComponent(rawKey)).replace(/[^a-zA-Z0-9]/g,'').slice(0,16);
+    const assignedGearId = activityGear[rawKey] || '';
+    const hasGear = !!assignedGearId;
     return `<tr>
       <td>
         <div class="ride-name">${r.name}</div>
@@ -2130,13 +2260,16 @@ function buildRideLog() {
       <td><span class="stat-chip elev-chip">↑ ${r.ascent.toFixed(0)}m</span></td>
       <td>${r.avgHr > 0 ? '<span class="stat-chip hr-chip">♥ '+r.avgHr+' bpm</span>' : '—'}</td>
       <td>${r.calories > 0 ? r.calories.toLocaleString()+' kcal' : '—'}</td>
+      <td>
+        ${gear.length > 0 ? `<select class="gear-assign-select ${hasGear?'assigned':''}" onchange="assignGear('${key}',this.value)" title="Assign gear">${gearOpts}</select>` : ''}
+      </td>
       <td style="white-space:nowrap">
         <button class="note-btn ${hasNote?'has-note':''}" onclick="toggleNoteRow('${noteRowId}','${key}')" title="${hasNote?'Edit note':'Add note'}">💬</button>
         <button class="delete-btn" onclick="deleteRide('${key}')" title="Remove this activity">✕</button>
       </td>
     </tr>
     <tr class="note-row hidden" id="${noteRowId}">
-      <td colspan="9">
+      <td colspan="10">
         <div class="note-editor">
           <textarea class="note-textarea" id="ta-${noteRowId}" placeholder="Add a note about this activity…" rows="2">${note.replace(/</g,'&lt;')}</textarea>
           <button class="note-save-btn" onclick="saveNote('${key}','${noteRowId}')">Save</button>
@@ -2149,10 +2282,26 @@ function buildRideLog() {
     <thead><tr>
       <th>Activity</th><th>Sport</th><th>Distance</th><th>Duration</th>
       <th>Avg speed</th><th>Elevation</th><th>Heart rate</th>
-      <th>Calories</th><th></th>
+      <th>Calories</th><th>Gear</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+
+  // Restore selected gear values
+  sorted.forEach(r => {
+    const rawKey = r.name + '|' + r.date;
+    const gearId = activityGear[rawKey];
+    if (!gearId) return;
+    const key = encodeURIComponent(rawKey);
+    // find select in this row by matching data
+    const selects = wrap.querySelectorAll('.gear-assign-select');
+    selects.forEach(sel => {
+      if (sel.getAttribute('onchange')?.includes(encodeURIComponent(key)) ||
+          sel.getAttribute('onchange')?.includes(key)) {
+        sel.value = gearId;
+      }
+    });
+  });
 }
 
 function switchTrend(btn, metric) {
@@ -2369,6 +2518,8 @@ function deleteRide(encodedKey) {
   if (!confirm(`Remove this activity?\n\n${r.name} · ${r.date} · ${r.distKm.toFixed(1)}km`)) return;
   delete notes[key];
   saveNotes();
+  delete activityGear[key];
+  saveActivityGear();
   rides.splice(idx, 1);
   saveRides();
   if (rides.length === 0) resetAll();
@@ -3241,6 +3392,127 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+// ===== GEAR =====
+const GEAR_TYPES = {
+  road:   { icon: '🚴', label: 'Road Bike' },
+  gravel: { icon: '🚵', label: 'Gravel Bike' },
+  mtb:    { icon: '🚵', label: 'MTB' },
+  shoes:  { icon: '👟', label: 'Shoes' },
+  skis:   { icon: '⛷', label: 'Skis' },
+  other:  { icon: '📦', label: 'Other' },
+};
+
+let gear = [];
+let activityGear = {};
+
+function loadGear() {
+  try { gear = JSON.parse(localStorage.getItem('gmt_gear') || '[]'); } catch(e) { gear = []; }
+  try { activityGear = JSON.parse(localStorage.getItem('gmt_activity_gear') || '{}'); } catch(e) { activityGear = {}; }
+}
+
+function saveGear() {
+  try { localStorage.setItem('gmt_gear', JSON.stringify(gear)); } catch(e) {}
+}
+
+function saveActivityGear() {
+  try { localStorage.setItem('gmt_activity_gear', JSON.stringify(activityGear)); } catch(e) {}
+}
+
+function addGear() {
+  const nameEl = document.getElementById('gear-name-input');
+  const typeEl = document.getElementById('gear-type-select');
+  const dateEl = document.getElementById('gear-date-input');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+  const type = typeEl.value;
+  const purchaseDate = dateEl.value;
+  gear.push({ id: Date.now() + '', name, type, purchaseDate });
+  saveGear();
+  nameEl.value = '';
+  dateEl.value = '';
+  buildGearList();
+  buildRideLog(); // refresh dropdowns
+}
+
+function deleteGear(id) {
+  if (!confirm('Remove this gear? Activity assignments will be cleared.')) return;
+  gear = gear.filter(g => g.id !== id);
+  // Clear any assignments to this gear item
+  Object.keys(activityGear).forEach(k => {
+    if (activityGear[k] === id) delete activityGear[k];
+  });
+  saveGear();
+  saveActivityGear();
+  buildGearList();
+  buildRideLog();
+}
+
+function assignGear(encodedKey, gearId) {
+  const key = decodeURIComponent(encodedKey);
+  if (gearId) {
+    activityGear[key] = gearId;
+  } else {
+    delete activityGear[key];
+  }
+  saveActivityGear();
+  buildGearList(); // refresh odometers live
+  // Update the select styling immediately
+  event?.target?.classList.toggle('assigned', !!gearId);
+}
+
+function gearOdometer(id) {
+  return rides
+    .filter(r => activityGear[r.name + '|' + r.date] === id)
+    .reduce((s, r) => s + r.distKm, 0);
+}
+
+function gearActivityCount(id) {
+  return rides.filter(r => activityGear[r.name + '|' + r.date] === id).length;
+}
+
+function buildGearList() {
+  const list = document.getElementById('gear-list');
+  const badge = document.getElementById('gear-count-badge');
+  if (!list) return;
+  if (badge) badge.textContent = gear.length + ' item' + (gear.length !== 1 ? 's' : '');
+
+  if (!gear.length) {
+    list.innerHTML = '<div class="gear-empty">No gear yet — add your bikes, shoes, and skis above</div>';
+    return;
+  }
+
+  const odometers = gear.map(g => gearOdometer(g.id));
+  const maxOdo = Math.max(...odometers, 1);
+
+  list.innerHTML = gear.map((g, i) => {
+    const odo = odometers[i];
+    const count = gearActivityCount(g.id);
+    const pct = Math.min(100, Math.round(odo / maxOdo * 100));
+    const gt = GEAR_TYPES[g.type] || GEAR_TYPES.other;
+    const sinceStr = g.purchaseDate ? 'Since ' + g.purchaseDate : '';
+    const color = g.type === 'road' ? 'var(--gravel)' :
+                  g.type === 'gravel' ? 'var(--gravel)' :
+                  g.type === 'mtb' ? 'var(--mtb)' :
+                  g.type === 'run' ? 'var(--run)' :
+                  g.type === 'skis' ? 'var(--ski)' : 'var(--muted)';
+    return `<div class="gear-item">
+      <div class="gear-icon">${gt.icon}</div>
+      <div class="gear-info">
+        <div class="gear-name">${g.name}</div>
+        <div class="gear-meta">${gt.label}${sinceStr ? ' · ' + sinceStr : ''}</div>
+      </div>
+      <div class="gear-odometer">
+        <div class="gear-odo-val">${odo >= 1000 ? (odo/1000).toFixed(1)+'k' : odo.toFixed(0)} km</div>
+        <div class="gear-odo-label">${count} activit${count !== 1 ? 'ies' : 'y'}</div>
+        <div class="gear-odo-bar-track">
+          <div class="gear-odo-bar-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+      </div>
+      <button class="gear-delete-btn" onclick="deleteGear('${g.id}')" title="Remove gear">✕</button>
+    </div>`;
+  }).join('');
+}
+
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
@@ -3253,6 +3525,7 @@ document.addEventListener('keydown', e => {
 // ===== INIT =====
 loadLinkButtons();
 loadDashboardTitle();
+loadGear();
 initGallery();
 if (rides.length) renderDashboard();
 </script>
