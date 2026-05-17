@@ -775,6 +775,131 @@ body::before {
   letter-spacing: 0.1em; color: rgba(255,255,255,0.45);
 }
 
+/* ===== MILESTONE TOAST ===== */
+#toast-container {
+  position: fixed; bottom: 28px; right: 28px;
+  z-index: 999; display: flex; flex-direction: column; gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  background: #111009; color: #f5f2ee;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; padding: 14px 18px;
+  display: flex; align-items: flex-start; gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  animation: toastIn 0.35s cubic-bezier(.2,.8,.3,1) forwards;
+  pointer-events: all; max-width: 320px; min-width: 240px;
+}
+.toast.toast-out {
+  animation: toastOut 0.3s ease forwards;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(8px) scale(0.95); }
+}
+.toast-icon { font-size: 22px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+.toast-body { flex: 1; }
+.toast-title {
+  font-family: var(--font-head); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.02em; color: #f5f2ee; margin-bottom: 2px;
+}
+.toast-sub {
+  font-size: 11px; color: rgba(245,242,238,0.55); font-weight: 300;
+}
+.toast-close {
+  background: none; border: none; color: rgba(245,242,238,0.35);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0;
+  flex-shrink: 0; margin-top: 1px; transition: color 0.12s;
+}
+.toast-close:hover { color: #f5f2ee; }
+
+/* ===== PERSONAL BESTS TABLE ===== */
+.pb-panel { margin-bottom: 20px; }
+.pb-sport-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.pb-table-wrap { overflow-x: auto; }
+.pb-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.pb-table th {
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left;
+}
+.pb-table td {
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.pb-table tr:last-child td { border-bottom: none; }
+.pb-table tr:hover td { background: var(--surface2); }
+.pb-dist-label {
+  font-family: var(--font-head); font-size: 15px; font-weight: 700;
+  color: var(--text);
+}
+.pb-dist-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.pb-val {
+  font-family: var(--font-head); font-size: 14px; font-weight: 600;
+  color: var(--text);
+}
+.pb-val.gold { color: #b8860b; }
+.pb-meta { font-size: 11px; color: var(--muted); font-weight: 300; }
+.pb-crown { font-size: 14px; margin-right: 3px; }
+.pb-empty {
+  text-align: center; padding: 28px;
+  font-size: 13px; color: var(--muted); font-style: italic;
+}
+
+/* ===== SNAPSHOT / EXPORT ===== */
+.snapshot-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 14px; border-radius: 2px; cursor: pointer;
+  background: rgba(255,255,255,0.1); color: rgba(245,242,238,0.7);
+  border: none; transition: all 0.15s;
+}
+.snapshot-btn:hover { background: rgba(255,255,255,0.18); color: #f5f2ee; }
+.snapshot-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+#snapshot-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,9,8,0.82); backdrop-filter: blur(6px);
+  z-index: 400; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+#snapshot-overlay.open { display: flex; }
+.snapshot-modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 22px; max-width: 92vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  animation: modalIn 0.2s ease;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.snapshot-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.snapshot-modal-title {
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.04em;
+}
+#snapshot-canvas {
+  border: 1px solid var(--border); border-radius: 3px;
+  max-width: 100%; display: block;
+}
+.snapshot-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.snapshot-dl-btn {
+  font-family: var(--font-head); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 9px 20px; border-radius: 2px; cursor: pointer;
+  background: var(--gravel); color: white; border: none;
+  transition: background 0.15s;
+}
+.snapshot-dl-btn:hover { background: #a84e22; }
+.snapshot-hint {
+  font-size: 11px; color: var(--muted); font-style: italic;
+}
+
 .footer {
   padding: 24px 0 8px;
   text-align: center;
@@ -885,6 +1010,7 @@ body::before {
         Polar
       </a>
       <button class="export-btn" onclick="exportCSV()" title="Export all activities as CSV">↓ Export</button>
+      <button class="snapshot-btn" onclick="openSnapshot()" id="snapshot-btn" title="Export dashboard as image">📷 Snapshot</button>
       <button class="add-btn" onclick="openModal()">+ Add activities</button>
       <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
     </div>
@@ -971,6 +1097,19 @@ body::before {
             <div class="panel-badge" id="pr-sport-badge">All sports</div>
           </div>
           <div class="pr-grid" id="pr-grid"></div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <!-- Personal Bests by Distance -->
+        <div class="panel pb-panel">
+          <div class="panel-header">
+            <div class="panel-title">🏆 Personal Bests by Distance</div>
+            <div class="pb-sport-tabs" id="pb-sport-tabs"></div>
+          </div>
+          <div class="pb-table-wrap">
+            <div id="pb-table-body"></div>
+          </div>
         </div>
 
         <div style="height:16px"></div>
@@ -1677,6 +1816,7 @@ function resetAll() {
   localStorage.removeItem('gmt_title');
   localStorage.removeItem('gmt_photos');
   localStorage.removeItem('gmt_notes');
+  localStorage.removeItem('gmt_milestones_seen');
   notes = {};
   photos = [];
   renderGallery();
@@ -1733,6 +1873,7 @@ function setSport(key) {
   buildHeatmap();
   updateKPIs();
   buildPR();
+  buildPBTable();
   // reset trend tab active state
   document.querySelectorAll('.tab').forEach(t => {
     if (t.textContent.trim() === 'Distance') t.classList.add('active');
@@ -1766,7 +1907,9 @@ function renderDashboard() {
   buildGoals();
   buildHeatmap();
   buildPR();
+  buildPBTable();
   buildCompareSelects();
+  checkMilestones();
 
   document.getElementById('drop-screen').classList.add('hidden');
   document.getElementById('dashboard').classList.add('visible');
@@ -2653,6 +2796,451 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ===== MILESTONE TOASTS =====
+const MILESTONES = [
+  // Distance (km)
+  { key:'dist_100',   val:100,    unit:'dist',  icon:'🚀', title:'100 km!',        sub:'First century milestone' },
+  { key:'dist_250',   val:250,    unit:'dist',  icon:'⚡', title:'250 km!',        sub:'Quarter-thousand km logged' },
+  { key:'dist_500',   val:500,    unit:'dist',  icon:'🏅', title:'500 km!',        sub:'Half a thousand km' },
+  { key:'dist_1000',  val:1000,   unit:'dist',  icon:'🥇', title:'1,000 km!',      sub:'A thousand kilometres' },
+  { key:'dist_2500',  val:2500,   unit:'dist',  icon:'🌍', title:'2,500 km!',      sub:'You\'ve circled a continent' },
+  { key:'dist_5000',  val:5000,   unit:'dist',  icon:'🌏', title:'5,000 km!',      sub:'Around half the globe' },
+  { key:'dist_10000', val:10000,  unit:'dist',  icon:'🛸', title:'10,000 km!',     sub:'Quarter of the Earth\'s circumference' },
+  // Elevation (m)
+  { key:'elev_1000',  val:1000,   unit:'elev',  icon:'⛰', title:'1,000 m climbed!', sub:'One kilometre of climbing' },
+  { key:'elev_5000',  val:5000,   unit:'elev',  icon:'🏔', title:'5,000 m climbed!', sub:'Half an Everest' },
+  { key:'elev_8848',  val:8848,   unit:'elev',  icon:'🗻', title:'8,848 m climbed!', sub:'One full Everest ascent' },
+  { key:'elev_10000', val:10000,  unit:'elev',  icon:'☁️', title:'10,000 m climbed!','sub':'Above the clouds' },
+  { key:'elev_29029', val:29029,  unit:'elev',  icon:'🌌', title:'29,029 m climbed!','sub':'Three Everests — extraordinary' },
+  // Activity count
+  { key:'acts_10',    val:10,     unit:'acts',  icon:'🎯', title:'10 activities!', sub:'You\'re on your way' },
+  { key:'acts_25',    val:25,     unit:'acts',  icon:'🔥', title:'25 activities!', sub:'Building the habit' },
+  { key:'acts_50',    val:50,     unit:'acts',  icon:'💪', title:'50 activities!', sub:'Fifty sessions strong' },
+  { key:'acts_100',   val:100,    unit:'acts',  icon:'🏆', title:'100 activities!', sub:'One hundred sessions — legendary' },
+  { key:'acts_250',   val:250,    unit:'acts',  icon:'👑', title:'250 activities!', sub:'Elite consistency' },
+  { key:'acts_500',   val:500,    unit:'acts',  icon:'🌟', title:'500 activities!', sub:'Half a thousand sessions' },
+];
+
+function checkMilestones() {
+  const seenRaw = localStorage.getItem('gmt_milestones_seen') || '{}';
+  let seen = {};
+  try { seen = JSON.parse(seenRaw); } catch(e) {}
+
+  const totalDist = rides.reduce((s,r) => s + r.distKm, 0);
+  const totalElev = rides.reduce((s,r) => s + r.ascent, 0);
+  const totalActs = rides.length;
+
+  const fired = [];
+  for (const m of MILESTONES) {
+    if (seen[m.key]) continue;
+    const current = m.unit === 'dist' ? totalDist : m.unit === 'elev' ? totalElev : totalActs;
+    if (current >= m.val) {
+      fired.push(m);
+      seen[m.key] = true;
+    }
+  }
+
+  if (fired.length) {
+    localStorage.setItem('gmt_milestones_seen', JSON.stringify(seen));
+    // Show toasts staggered
+    fired.forEach((m, i) => {
+      setTimeout(() => showToast(m.icon, m.title, m.sub), i * 600);
+    });
+  }
+}
+
+function showToast(icon, title, sub) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-sub">${sub}</div>
+    </div>
+    <button class="toast-close" onclick="dismissToast(this.closest('.toast'))">✕</button>
+  `;
+  container.appendChild(toast);
+
+  // Auto-dismiss after 5.5 s
+  setTimeout(() => dismissToast(toast), 5500);
+}
+
+function dismissToast(toast) {
+  if (!toast || toast.classList.contains('toast-out')) return;
+  toast.classList.add('toast-out');
+  setTimeout(() => toast.remove(), 320);
+}
+
+// ===== PERSONAL BESTS BY DISTANCE =====
+// Standard distances in km (only show if any activity is within ±20%)
+const PB_DISTANCES = [
+  { km: 5,    label: '5 km',        miles: '3.1 mi' },
+  { km: 10,   label: '10 km',       miles: '6.2 mi' },
+  { km: 15,   label: '15 km',       miles: '9.3 mi' },
+  { km: 20,   label: '20 km',       miles: '12.4 mi' },
+  { km: 21.1, label: 'Half Marathon', miles: '13.1 mi' },
+  { km: 25,   label: '25 km',       miles: '15.5 mi' },
+  { km: 30,   label: '30 km',       miles: '18.6 mi' },
+  { km: 42.2, label: 'Marathon',    miles: '26.2 mi' },
+  { km: 50,   label: '50 km',       miles: '31.1 mi' },
+  { km: 80,   label: '80 km',       miles: '49.7 mi' },
+  { km: 100,  label: '100 km',      miles: '62.1 mi' },
+  { km: 160,  label: '100 miles',   miles: '99.4 mi' },
+];
+
+let pbSport = ALL_KEY;
+
+function buildPBTable() {
+  const tabsEl = document.getElementById('pb-sport-tabs');
+  const bodyEl = document.getElementById('pb-table-body');
+  if (!tabsEl || !bodyEl) return;
+
+  // Build sport tabs
+  const sportCounts = {};
+  rides.forEach(r => { sportCounts[r.sport] = (sportCounts[r.sport]||0)+1; });
+  const availableSports = Object.keys(sportCounts);
+
+  let tabsHtml = `<button class="tab ${pbSport===ALL_KEY?'active':''}" onclick="setPbSport('${ALL_KEY}')">All</button>`;
+  availableSports.forEach(k => {
+    tabsHtml += `<button class="tab ${pbSport===k?'active':''}" onclick="setPbSport('${k}')">${sportIcon(k)} ${sportLabel(k)}</button>`;
+  });
+  tabsEl.innerHTML = tabsHtml;
+
+  const fr = pbSport === ALL_KEY ? rides : rides.filter(r => r.sport === pbSport);
+  if (!fr.length) {
+    bodyEl.innerHTML = '<div class="pb-empty">No activities yet</div>';
+    return;
+  }
+
+  // For each standard distance, find activities within ±20% tolerance
+  const rows = [];
+  for (const dist of PB_DISTANCES) {
+    const lo = dist.km * 0.80;
+    const hi = dist.km * 1.20;
+    const candidates = fr.filter(r => r.distKm >= lo && r.distKm <= hi && r.avgSpeed > 0);
+    if (!candidates.length) continue;
+
+    // Best = fastest average speed (best time for that distance)
+    const best = candidates.reduce((b,r) => r.avgSpeed > b.avgSpeed ? r : b);
+    // Time estimate = dist / speed * 3600
+    const estTimeSecs = (dist.km / best.avgSpeed) * 3600;
+    const h = Math.floor(estTimeSecs/3600);
+    const m = Math.floor((estTimeSecs%3600)/60);
+    const s = Math.floor(estTimeSecs%60);
+    const timeStr = h > 0
+      ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      : `${m}:${String(s).padStart(2,'0')}`;
+    const paceMinKm = 60 / best.avgSpeed;
+    const paceStr = `${Math.floor(paceMinKm)}:${String(Math.round((paceMinKm%1)*60)).padStart(2,'0')} /km`;
+
+    rows.push({ dist, best, timeStr, paceStr, count: candidates.length });
+  }
+
+  if (!rows.length) {
+    bodyEl.innerHTML = '<div class="pb-empty">No activities match standard distances yet — keep going!</div>';
+    return;
+  }
+
+  const tableRows = rows.map((row, i) => {
+    const sc = sportColor(row.best.sport);
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    return `<tr>
+      <td>
+        <div class="pb-dist-label">${row.dist.label}</div>
+        <div class="pb-dist-sub">${row.dist.miles}</div>
+      </td>
+      <td>
+        <div class="pb-val gold">${row.timeStr}</div>
+        <div class="pb-meta">${row.paceStr}</div>
+      </td>
+      <td>
+        <div class="pb-val">${row.best.avgSpeed.toFixed(1)} km/h</div>
+        <div class="pb-meta">${row.best.distKm.toFixed(1)} km actual</div>
+      </td>
+      <td>
+        <span class="sport-chip" style="background:${sc}">${sportIcon(row.best.sport)} ${sportLabel(row.best.sport)}</span>
+      </td>
+      <td>
+        <div class="pb-meta">${row.best.name}</div>
+        <div class="pb-meta">${row.best.date.slice(0,10)}</div>
+      </td>
+      <td style="text-align:right">
+        <span class="pb-crown">${medal}</span>
+        <span class="pb-meta">${row.count} effort${row.count!==1?'s':''}</span>
+      </td>
+    </tr>`;
+  }).join('');
+
+  bodyEl.innerHTML = `<table class="pb-table">
+    <thead><tr>
+      <th>Distance</th>
+      <th>Best Time</th>
+      <th>Avg Speed</th>
+      <th>Sport</th>
+      <th>Activity</th>
+      <th style="text-align:right">Efforts</th>
+    </tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>`;
+}
+
+function setPbSport(key) {
+  pbSport = key;
+  buildPBTable();
+}
+
+// ===== SNAPSHOT / SHARE =====
+function openSnapshot() {
+  if (!rides.length) { alert('Import some activities first.'); return; }
+
+  const overlay = document.getElementById('snapshot-overlay');
+  const canvas  = document.getElementById('snapshot-canvas');
+  overlay.classList.add('open');
+
+  renderSnapshotCanvas(canvas);
+}
+
+function closeSnapshot() {
+  document.getElementById('snapshot-overlay').classList.remove('open');
+}
+
+function handleSnapshotOverlay(e) {
+  if (e.target === document.getElementById('snapshot-overlay')) closeSnapshot();
+}
+
+function downloadSnapshot() {
+  const canvas = document.getElementById('snapshot-canvas');
+  const a = document.createElement('a');
+  const title = (localStorage.getItem('gmt_title') || 'green-mountain-tracker')
+    .toLowerCase().replace(/\s+/g, '-');
+  a.download = title + '-snapshot.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+function renderSnapshotCanvas(canvas) {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const W = 900, H = 500;
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.width  = Math.min(W, window.innerWidth - 80) + 'px';
+  canvas.style.height = 'auto';
+
+  const ctx = canvas.getContext('2d');
+
+  // ── Palette ──
+  const bg      = dark ? '#141210' : '#f5f2ee';
+  const surface = dark ? '#1e1b18' : '#ffffff';
+  const header  = '#111009';
+  const text    = dark ? '#ede9e3' : '#1a1714';
+  const muted   = dark ? '#8a8178' : '#7a7269';
+  const border  = dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.09)';
+  const accent  = '#c45e28';
+
+  // ── Background ──
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // ── Header bar ──
+  ctx.fillStyle = header;
+  ctx.fillRect(0, 0, W, 56);
+
+  // Logo text
+  ctx.fillStyle = 'rgba(245,242,238,0.4)';
+  ctx.font = '600 11px "Barlow Condensed", sans-serif';
+  ctx.letterSpacing = '0.2em';
+  ctx.fillText('GREEN MOUNTAIN', 24, 24);
+  ctx.fillStyle = accent;
+  ctx.fillText('TRACKER', 24, 40);
+  ctx.letterSpacing = '0px';
+
+  // Dashboard title
+  const dashTitle = localStorage.getItem('gmt_title') || 'Green Mountain Tracker';
+  ctx.fillStyle = '#f5f2ee';
+  ctx.font = 'bold 20px "Barlow Condensed", sans-serif';
+  ctx.fillText(dashTitle, 160, 35);
+
+  // Date range
+  const dateRange = document.getElementById('h-meta')?.textContent || '';
+  ctx.fillStyle = 'rgba(245,242,238,0.45)';
+  ctx.font = '300 11px Barlow, sans-serif';
+  ctx.fillText(dateRange, 160, 50);
+
+  // ── KPI grid ── (6 stats, 2 rows of 3)
+  const fr = filteredRides();
+  const totalDist = fr.reduce((s,r)=>s+r.distKm,0);
+  const totalElev = fr.reduce((s,r)=>s+r.ascent,0);
+  const totalTime = fr.reduce((s,r)=>s+r.duration,0);
+  const avgSpeed  = fr.filter(r=>r.avgSpeed>0).reduce((s,r,_,a)=>s+r.avgSpeed/a.length,0);
+  const totalCal  = fr.reduce((s,r)=>s+r.calories,0);
+  const avgHr     = fr.filter(r=>r.avgHr>0).reduce((s,r,_,a)=>s+r.avgHr/a.length,0);
+
+  const kpis = [
+    { label:'Distance',   val: totalDist.toFixed(0)+' km',   color:'#4a4a6a' },
+    { label:'Elevation',  val: totalElev.toFixed(0)+' m',    color:'#1e7a5e' },
+    { label:'Activities', val: fr.length+'',                  color:'#3a7abf' },
+    { label:'Avg Speed',  val: avgSpeed.toFixed(1)+' km/h',  color:'#8b6b3a' },
+    { label:'Calories',   val: totalCal>0 ? totalCal>=1000?(totalCal/1000).toFixed(1)+'k':totalCal.toFixed(0)+' kcal' : '—', color:'#4a3a8a' },
+    { label:'Avg HR',     val: avgHr>0 ? Math.round(avgHr)+' bpm' : '—', color:'#8b3a3a' },
+  ];
+
+  const kpiY = 72, kpiW = 138, kpiH = 70, kpiCols = 3, kpiGap = 8;
+  const kpiStartX = 24;
+
+  kpis.forEach((k, i) => {
+    const col = i % kpiCols;
+    const row = Math.floor(i / kpiCols);
+    const x = kpiStartX + col * (kpiW + kpiGap);
+    const y = kpiY + row * (kpiH + kpiGap);
+
+    // Card bg
+    ctx.fillStyle = surface;
+    roundRect(ctx, x, y, kpiW, kpiH, 3);
+    ctx.fill();
+
+    // Top accent bar
+    ctx.fillStyle = k.color;
+    roundRect(ctx, x, y, kpiW, 3, [3,3,0,0]);
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle = muted;
+    ctx.font = '600 9px "Barlow Condensed", sans-serif';
+    ctx.letterSpacing = '0.15em';
+    ctx.fillText(k.label.toUpperCase(), x+10, y+20);
+    ctx.letterSpacing = '0px';
+
+    // Value
+    ctx.fillStyle = k.color;
+    ctx.font = 'bold 22px "Barlow Condensed", sans-serif';
+    ctx.fillText(k.val, x+10, y+48);
+  });
+
+  // ── Sport breakdown bars ──
+  const barX = 24 + 3*(kpiW+kpiGap) + 16;
+  const barW = W - barX - 24;
+  const barY = 72;
+
+  ctx.fillStyle = surface;
+  roundRect(ctx, barX, barY, barW, 156, 3);
+  ctx.fill();
+
+  ctx.fillStyle = muted;
+  ctx.font = '600 9px "Barlow Condensed", sans-serif';
+  ctx.letterSpacing = '0.15em';
+  ctx.fillText('SPORT BREAKDOWN', barX+12, barY+18);
+  ctx.letterSpacing = '0px';
+
+  const sportDist = {};
+  rides.forEach(r => { sportDist[r.sport] = (sportDist[r.sport]||0)+r.distKm; });
+  const totalSportDist = Object.values(sportDist).reduce((s,v)=>s+v,0);
+  const sortedSports = Object.entries(sportDist).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  sortedSports.forEach(([key, dist], i) => {
+    const pct = totalSportDist > 0 ? dist/totalSportDist : 0;
+    const sy = barY + 30 + i*24;
+    const trackW = barW - 24 - 90;
+    const fillW = trackW * pct;
+    const sc = sportColor(key);
+
+    ctx.fillStyle = muted;
+    ctx.font = '500 11px "Barlow Condensed", sans-serif';
+    ctx.fillText(sportLabel(key), barX+12, sy+10);
+
+    ctx.fillStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
+    roundRect(ctx, barX+90, sy, trackW, 8, 4);
+    ctx.fill();
+
+    ctx.fillStyle = sc;
+    if (fillW > 0) { roundRect(ctx, barX+90, sy, Math.max(fillW,4), 8, 4); ctx.fill(); }
+
+    ctx.fillStyle = text;
+    ctx.font = 'bold 11px "Barlow Condensed", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(dist.toFixed(0)+' km', barX+barW-12, sy+10);
+    ctx.textAlign = 'left';
+  });
+
+  // ── Recent activity sparkline ──
+  const sparkY = 248;
+  const sparkH = H - sparkY - 24;
+  const sparkX = 24;
+  const sparkW = W - 48;
+
+  ctx.fillStyle = surface;
+  roundRect(ctx, sparkX, sparkY, sparkW, sparkH, 3);
+  ctx.fill();
+
+  ctx.fillStyle = muted;
+  ctx.font = '600 9px "Barlow Condensed", sans-serif';
+  ctx.letterSpacing = '0.15em';
+  ctx.fillText('RECENT ACTIVITY — DISTANCE', sparkX+12, sparkY+18);
+  ctx.letterSpacing = '0px';
+
+  // Last 30 activities
+  const recent = [...rides].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-30);
+  if (recent.length > 1) {
+    const maxDist = Math.max(...recent.map(r=>r.distKm), 1);
+    const plotX = sparkX + 12;
+    const plotW = sparkW - 24;
+    const plotY = sparkY + 28;
+    const plotH = sparkH - 42;
+    const barWidthFull = plotW / recent.length;
+    const barPad = Math.max(1, barWidthFull * 0.15);
+    const barW2 = barWidthFull - barPad;
+
+    recent.forEach((r, i) => {
+      const bh = (r.distKm / maxDist) * plotH;
+      const bx = plotX + i * barWidthFull;
+      const by = plotY + plotH - bh;
+      const sc = sportColor(r.sport);
+      ctx.fillStyle = sc + '99';
+      roundRect(ctx, bx, by, Math.max(barW2, 2), bh, 2);
+      ctx.fill();
+    });
+
+    // X-axis labels — just first and last date
+    ctx.fillStyle = muted;
+    ctx.font = '300 10px Barlow, sans-serif';
+    ctx.fillText(recent[0].date.slice(0,10), plotX, sparkY+sparkH-6);
+    ctx.textAlign = 'right';
+    ctx.fillText(recent[recent.length-1].date.slice(0,10), plotX+plotW, sparkY+sparkH-6);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Watermark ──
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+  ctx.font = '300 10px Barlow, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('Green Mountain Tracker · ' + new Date().toLocaleDateString(), W-16, H-8);
+  ctx.textAlign = 'left';
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'number') r = [r,r,r,r];
+  const [tl,tr,br,bl] = r;
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.arcTo(x+w, y, x+w, y+tr, tr);
+  ctx.lineTo(x+w, y+h-br);
+  ctx.arcTo(x+w, y+h, x+w-br, y+h, br);
+  ctx.lineTo(x+bl, y+h);
+  ctx.arcTo(x, y+h, x, y+h-bl, bl);
+  ctx.lineTo(x, y+tl);
+  ctx.arcTo(x, y, x+tl, y, tl);
+  ctx.closePath();
+}
+
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
@@ -2668,5 +3256,23 @@ loadDashboardTitle();
 initGallery();
 if (rides.length) renderDashboard();
 </script>
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- SNAPSHOT MODAL -->
+<div id="snapshot-overlay" onclick="handleSnapshotOverlay(event)">
+  <div class="snapshot-modal">
+    <div class="snapshot-modal-header">
+      <div class="snapshot-modal-title">📷 Dashboard Snapshot</div>
+      <button class="modal-close" onclick="closeSnapshot()">✕</button>
+    </div>
+    <canvas id="snapshot-canvas"></canvas>
+    <div class="snapshot-actions">
+      <span class="snapshot-hint">Right-click image to copy, or use Download</span>
+      <button class="snapshot-dl-btn" onclick="downloadSnapshot()">↓ Download PNG</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
