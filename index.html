@@ -294,16 +294,52 @@ body::before {
 .link-settings-input:focus { outline: none; border-color: var(--gravel); }
 .link-settings-input::placeholder { color: var(--muted); font-size: 12px; }
 
-/* ===== SPORT FILTER BAR ===== */
-.sport-filter-bar {
+/* ===== MAIN NAV TABS ===== */
+.main-nav {
   background: var(--surface);
   border-bottom: 1px solid var(--border2);
   padding: 0 32px;
-  display: flex; align-items: center; gap: 4px;
-  overflow-x: auto;
+  display: flex; align-items: center; gap: 0;
   position: sticky; top: 65px; z-index: 9;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  overflow-x: auto; scrollbar-width: none;
 }
+.main-nav::-webkit-scrollbar { display: none; }
+[data-theme="dark"] .main-nav { background: #181512; border-bottom-color: rgba(255,255,255,0.1); }
+
+.main-nav-tab {
+  font-family: var(--font-head); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 14px 22px; cursor: pointer; border: none;
+  background: transparent; color: var(--muted);
+  position: relative; white-space: nowrap; transition: color 0.15s;
+  flex-shrink: 0;
+}
+.main-nav-tab::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 2.5px; background: #fc4c02;
+  transform: scaleX(0); transition: transform 0.2s cubic-bezier(.4,0,.2,1);
+  border-radius: 1px 1px 0 0;
+}
+.main-nav-tab.active { color: var(--text); }
+.main-nav-tab.active::after { transform: scaleX(1); }
+.main-nav-tab:hover { color: var(--text); }
+
+/* Sport filter inside Activities tab */
+.sport-filter-inner {
+  display: flex; align-items: center; gap: 4px;
+  padding: 14px 0 2px; flex-wrap: wrap;
+}
+.sport-filter-inner .sport-btn { padding: 6px 14px; }
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.18s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Keep old sport-filter-bar as hidden — JS still builds it */
+.sport-filter-bar { display: none; }
+
 .sport-btn {
   font-family: var(--font-head); font-size: 11px; font-weight: 600;
   letter-spacing: 0.1em; text-transform: uppercase;
@@ -748,10 +784,8 @@ body::before {
 .activity-card-list { display: flex; flex-direction: column; gap: 0; }
 
 #ride-log-wrap {
-  max-height: 620px;
   overflow-y: auto;
   border-radius: 0 0 3px 3px;
-  /* Inner shadow top and bottom to hint at scroll */
   background:
     linear-gradient(var(--surface) 30%, transparent) top / 100% 20px no-repeat,
     linear-gradient(transparent, var(--surface) 70%) bottom / 100% 20px no-repeat,
@@ -1065,108 +1099,103 @@ body::before {
   </div>
 
   <!-- SPORT FILTER BAR -->
+  <!-- MAIN NAV -->
+  <nav class="main-nav" id="main-nav">
+    <button class="main-nav-tab active" onclick="switchTab(this,'tab-dashboard')">Dashboard</button>
+    <button class="main-nav-tab" onclick="switchTab(this,'tab-activities')">Activities</button>
+    <button class="main-nav-tab" onclick="switchTab(this,'tab-records')">Records</button>
+    <button class="main-nav-tab" onclick="switchTab(this,'tab-calendar')">Calendar</button>
+    <button class="main-nav-tab" onclick="switchTab(this,'tab-gallery')">Gallery</button>
+  </nav>
   <div class="sport-filter-bar" id="sport-filter-bar"></div>
 
   <div class="main">
 
-    <!-- FITNESS TREND -->
-    <div class="fitness-panel" id="fitness-panel" style="display:none">
-      <div class="fitness-score-block" id="fitness-score-block">
-        <div class="fitness-score-eyebrow">Fitness Score</div>
-        <div class="fitness-score-val" id="fitness-score-val">—</div>
-        <div class="fitness-score-delta" id="fitness-score-delta"></div>
+    <!-- ====== TAB: DASHBOARD ====== -->
+    <div class="tab-panel active" id="tab-dashboard">
+
+      <!-- FITNESS TREND -->
+      <div class="fitness-panel" id="fitness-panel" style="display:none">
+        <div class="fitness-score-block" id="fitness-score-block">
+          <div class="fitness-score-eyebrow">Fitness Score</div>
+          <div class="fitness-score-val" id="fitness-score-val">—</div>
+          <div class="fitness-score-delta" id="fitness-score-delta"></div>
+        </div>
+        <div class="fitness-metric-block">
+          <div class="fitness-metric-label">Fitness (CTL)</div>
+          <div class="fitness-metric-val" id="fitness-ctl">—</div>
+          <div class="fitness-metric-sub">42-day base</div>
+        </div>
+        <div class="fitness-metric-block">
+          <div class="fitness-metric-label">Fatigue (ATL)</div>
+          <div class="fitness-metric-val" id="fitness-atl">—</div>
+          <div class="fitness-metric-sub">7-day load</div>
+        </div>
+        <div class="fitness-form-block">
+          <div class="fitness-metric-label">Form (TSB)</div>
+          <div class="fitness-metric-val" id="fitness-tsb">—</div>
+          <div id="fitness-status-badge" class="fitness-status-badge"></div>
+        </div>
+        <div class="fitness-sparkline">
+          <canvas id="fitnessSparkline"></canvas>
+        </div>
       </div>
-      <div class="fitness-metric-block">
-        <div class="fitness-metric-label">Fitness (CTL)</div>
-        <div class="fitness-metric-val" id="fitness-ctl">—</div>
-        <div class="fitness-metric-sub">42-day base</div>
-      </div>
-      <div class="fitness-metric-block">
-        <div class="fitness-metric-label">Fatigue (ATL)</div>
-        <div class="fitness-metric-val" id="fitness-atl">—</div>
-        <div class="fitness-metric-sub">7-day load</div>
-      </div>
-      <div class="fitness-form-block">
-        <div class="fitness-metric-label">Form (TSB)</div>
-        <div class="fitness-metric-val" id="fitness-tsb">—</div>
-        <div id="fitness-status-badge" class="fitness-status-badge"></div>
-      </div>
-      <div class="fitness-sparkline">
-        <canvas id="fitnessSparkline"></canvas>
+
+      <!-- GOAL BAR -->
+      <div class="goal-bar" id="goal-bar"></div>
+
+      <!-- BODY -->
+      <div class="body-layout">
+        <div class="sidebar" id="kpi-strip"></div>
+        <div class="content-col">
+
+          <!-- Trend chart -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Activity trends</div>
+              <div class="tab-bar">
+                <button class="tab active" onclick="switchTrend(this,'dist')">Distance</button>
+                <button class="tab" onclick="switchTrend(this,'speed')">Speed/Pace</button>
+                <button class="tab" onclick="switchTrend(this,'elev')">Elevation</button>
+                <button class="tab" onclick="switchTrend(this,'hr')">Heart rate</button>
+                <button class="tab" onclick="switchTrend(this,'cal')">Calories</button>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+          </div>
+
+          <!-- 2-col row -->
+          <div class="grid-2">
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-header"><div class="panel-title">Monthly volume</div></div>
+              <div class="chart-wrap" style="height:190px"><canvas id="monthChart"></canvas></div>
+            </div>
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-header"><div class="panel-title">Sport breakdown</div></div>
+              <div id="sport-breakdown-wrap" style="padding-top:8px"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
-    <!-- GOAL BAR -->
-    <div class="goal-bar" id="goal-bar"></div>
-
-    <!-- BODY -->
-    <div class="body-layout">
-      <div class="sidebar" id="kpi-strip"></div>
-
-      <div class="content-col">
-
-        <!-- Trend chart -->
-        <div class="panel">
+    <!-- ====== TAB: ACTIVITIES ====== -->
+    <div class="tab-panel" id="tab-activities">
+      <div style="padding:20px 32px 0">
+        <div class="sport-filter-inner" id="sport-filter-inner"></div>
+        <div class="panel" style="margin-top:12px">
           <div class="panel-header">
-            <div class="panel-title">Activity trends</div>
-            <div class="tab-bar">
-              <button class="tab active" onclick="switchTrend(this,'dist')">Distance</button>
-              <button class="tab" onclick="switchTrend(this,'speed')">Speed/Pace</button>
-              <button class="tab" onclick="switchTrend(this,'elev')">Elevation</button>
-              <button class="tab" onclick="switchTrend(this,'hr')">Heart rate</button>
-              <button class="tab" onclick="switchTrend(this,'cal')">Calories</button>
-            </div>
-          </div>
-          <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
-        </div>
-
-        <!-- 2-col row -->
-        <div class="grid-2">
-          <div class="panel" style="margin-bottom:0">
-            <div class="panel-header">
-              <div class="panel-title">Monthly volume</div>
-            </div>
-            <div class="chart-wrap" style="height:190px"><canvas id="monthChart"></canvas></div>
-          </div>
-          <div class="panel" style="margin-bottom:0">
-            <div class="panel-header">
-              <div class="panel-title">Sport breakdown</div>
-            </div>
-            <div id="sport-breakdown-wrap" style="padding-top:8px"></div>
-          </div>
-        </div>
-
-        <!-- Personal Records + Achievements side by side -->
-        <div class="insight-row">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Personal Records</div>
-              <div class="panel-badge" id="pr-sport-badge">All sports</div>
-            </div>
-            <div class="pr-grid" id="pr-grid"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Achievements</div>
-              <div class="panel-badge" id="achievement-badge">0 unlocked</div>
-            </div>
-            <div class="achievement-grid" id="achievement-grid"></div>
-          </div>
-        </div>
-
-        <!-- Activity log -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Activity log</div>
+            <div class="panel-title">Activities</div>
             <div style="display:flex;align-items:center;gap:8px;">
               <div class="panel-badge" id="ride-count-badge">0 activities</div>
-              <button class="tab" onclick="openCompare()" style="background:var(--surface2);border-color:var(--border2)">⇄ Compare</button>
+              <button class="tab" onclick="openCompare()" style="background:var(--surface2);border-color:var(--border2)">&#8644; Compare</button>
               <div style="display:flex;gap:2px;">
                 <button class="tab active" onclick="setSort(this,'date')" id="sort-date">Date</button>
                 <button class="tab" onclick="setSort(this,'dist')" id="sort-dist">Dist</button>
                 <button class="tab" onclick="setSort(this,'elev')" id="sort-elev">Elev</button>
                 <button class="tab" onclick="setSort(this,'speed')" id="sort-speed">Speed</button>
-                <button class="tab" onclick="toggleSortDir()" id="sort-dir" style="min-width:76px;">↓ Newest</button>
+                <button class="tab" onclick="toggleSortDir()" id="sort-dir" style="min-width:76px;">&#8595; Newest</button>
               </div>
             </div>
           </div>
@@ -1174,18 +1203,40 @@ body::before {
             <div class="empty"><div class="empty-head">No activities yet</div><div class="empty-sub">Drop CSV or GPX files to get started</div></div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div style="height:16px"></div>
+    <!-- ====== TAB: RECORDS ====== -->
+    <div class="tab-panel" id="tab-records">
+      <div style="padding:20px 32px 0">
+        <div class="insight-row" style="margin-bottom:0">
+          <div class="panel" style="margin-bottom:0">
+            <div class="panel-header">
+              <div class="panel-title">Personal Records</div>
+              <div class="panel-badge" id="pr-sport-badge">All sports</div>
+            </div>
+            <div class="pr-grid" id="pr-grid"></div>
+          </div>
+          <div class="panel" style="margin-bottom:0">
+            <div class="panel-header">
+              <div class="panel-title">Achievements</div>
+              <div class="panel-badge" id="achievement-badge">0 unlocked</div>
+            </div>
+            <div class="achievement-grid" id="achievement-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <!-- Heatmap -->
+    <!-- ====== TAB: CALENDAR ====== -->
+    <div class="tab-panel" id="tab-calendar">
+      <div style="padding:20px 32px 0">
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">Activity calendar</div>
             <div id="heatmap-year-controls" style="display:flex;gap:2px;"></div>
           </div>
-          <div class="heatmap-scroll">
-            <div id="heatmap-wrap"></div>
-          </div>
+          <div class="heatmap-scroll"><div id="heatmap-wrap"></div></div>
           <div class="hm-legend">
             <span>Less</span>
             <div class="hm-legend-cells">
@@ -1198,10 +1249,13 @@ body::before {
             <span>More</span>
           </div>
         </div>
-
         <div id="hm-tooltip" class="hm-tooltip"></div>
+      </div>
+    </div>
 
-        <!-- Photo Gallery -->
+    <!-- ====== TAB: GALLERY ====== -->
+    <div class="tab-panel" id="tab-gallery">
+      <div style="padding:20px 32px 0">
         <div class="panel" id="gallery-panel">
           <div class="panel-header">
             <div class="panel-title">Photo Gallery</div>
@@ -1209,26 +1263,26 @@ body::before {
           </div>
           <div class="gallery-drop-zone" id="gallery-drop-zone">
             <input type="file" id="gallery-file-input" accept="image/*" multiple>
-            <span class="gallery-drop-icon">📷</span>
+            <span class="gallery-drop-icon">&#128247;</span>
             <div class="gallery-drop-hint">Drop photos here</div>
-            <div class="gallery-drop-sub">JPG, PNG, HEIC — drag &amp; drop or click to browse</div>
+            <div class="gallery-drop-sub">JPG, PNG, HEIC &#8212; drag &amp; drop or click to browse</div>
           </div>
           <div class="photo-grid" id="photo-grid"></div>
         </div>
-
-        <!-- Lightbox -->
-        <div id="lightbox" onclick="closeLightbox()">
-          <button id="lightbox-close" onclick="closeLightbox()">✕</button>
-          <button class="lightbox-nav" id="lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">‹</button>
-          <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
-          <button class="lightbox-nav" id="lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">›</button>
-          <div id="lightbox-counter"></div>
-        </div>
-
-        <div class="footer">Drop new CSV or GPX files at any time — your activity history accumulates automatically</div>
-
       </div>
     </div>
+
+    <!-- Lightbox (global) -->
+    <div id="lightbox" onclick="closeLightbox()">
+      <button id="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+      <button class="lightbox-nav" id="lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
+      <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+      <button class="lightbox-nav" id="lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
+      <div id="lightbox-counter"></div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--muted);font-weight:300;font-style:italic">Drop CSV or GPX files at any time &#8212; your history accumulates automatically</div>
+
   </div>
 </div>
 
@@ -1492,6 +1546,34 @@ function exportCSV() {
   a.href = URL.createObjectURL(blob);
   a.download = 'green-mountain-activities.csv';
   a.click();
+}
+
+// ===== MAIN NAV TABS =====
+let activeTabId = 'tab-dashboard';
+
+function switchTab(btn, tabId) {
+  // Update tab buttons
+  document.querySelectorAll('.main-nav-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  // Update panels
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById(tabId);
+  if (panel) panel.classList.add('active');
+  activeTabId = tabId;
+  // Redraw charts when switching to dashboard (Chart.js needs visible canvas)
+  if (tabId === 'tab-dashboard') {
+    if (rides.length) {
+      buildTrendChart(currentTrendMetric);
+      buildMonthChart();
+      buildFitnessScore();
+    }
+  }
+  // Redraw heatmap when switching to calendar
+  if (tabId === 'tab-calendar' && rides.length) buildHeatmap();
+  // Reinit gallery drop zone
+  if (tabId === 'tab-gallery') initGallery();
+  // Save last tab
+  try { localStorage.setItem('gmt_tab', tabId); } catch(e) {}
 }
 
 // ===== DROP SETUP =====
@@ -1915,11 +1997,12 @@ function filteredRides() {
 // ===== SPORT FILTER BAR =====
 function buildSportFilterBar() {
   const bar = document.getElementById('sport-filter-bar');
+  const inner = document.getElementById('sport-filter-inner');
   const sportCounts = {};
   rides.forEach(r => { sportCounts[r.sport] = (sportCounts[r.sport]||0)+1; });
-  
+
   const total = rides.length;
-  let html = `<button class="sport-btn ${activeSport===ALL_KEY?'active':''}" 
+  let html = `<button class="sport-btn ${activeSport===ALL_KEY?'active':''}"
     style="--sport-color:#4a4a6a"
     onclick="setSport('${ALL_KEY}')">
     <div class="sport-dot"></div>All
@@ -1929,14 +2012,15 @@ function buildSportFilterBar() {
   Object.entries(SPORTS).forEach(([key, def]) => {
     const count = sportCounts[key] || 0;
     if (count === 0) return;
-    html += `<button class="sport-btn ${activeSport===key?'active':''}" 
+    html += `<button class="sport-btn ${activeSport===key?'active':''}"
       style="--sport-color:${def.color}"
       onclick="setSport('${key}')">
       <div class="sport-dot"></div>${def.icon} ${def.label}
       <span class="sport-count-badge">${count}</span>
     </button>`;
   });
-  bar.innerHTML = html;
+  if (bar) bar.innerHTML = html;
+  if (inner) inner.innerHTML = html; // mirror into Activities tab
 }
 
 function setSport(key) {
@@ -3086,6 +3170,14 @@ document.addEventListener('keydown', e => {
 loadLinkButtons();
 loadDashboardTitle();
 initGallery();
+// Restore last tab
+(function() {
+  const saved = localStorage.getItem('gmt_tab');
+  if (saved && saved !== 'tab-dashboard') {
+    const btn = document.querySelector(`.main-nav-tab[onclick*="${saved}"]`);
+    if (btn) switchTab(btn, saved);
+  }
+})();
 if (rides.length) renderDashboard();
 </script>
 </body>
