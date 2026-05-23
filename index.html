@@ -172,7 +172,7 @@ body::before {
 
 /* ===== PERSONAL RECORDS ===== */
 .pr-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 .pr-card {
@@ -735,7 +735,107 @@ body::before {
 .photo-delete-btn:hover { background: #c0392b; }
 .gallery-count { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; text-align: right; }
 
-/* ===== ROUTE MAP MODAL ===== */
+/* ===== INSIGHT ROW (PR + Achievements side by side) ===== */
+.insight-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.insight-row .panel { margin-bottom: 0; }
+
+/* ===== ACTIVITY CARDS ===== */
+.activity-card-list { display: flex; flex-direction: column; gap: 0; }
+
+#ride-log-wrap {
+  max-height: 620px;
+  overflow-y: auto;
+  border-radius: 0 0 3px 3px;
+  /* Inner shadow top and bottom to hint at scroll */
+  background:
+    linear-gradient(var(--surface) 30%, transparent) top / 100% 20px no-repeat,
+    linear-gradient(transparent, var(--surface) 70%) bottom / 100% 20px no-repeat,
+    linear-gradient(rgba(0,0,0,0.04), transparent) top / 100% 8px no-repeat,
+    linear-gradient(transparent, rgba(0,0,0,0.04)) bottom / 100% 8px no-repeat;
+  background-attachment: local, local, scroll, scroll;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+#ride-log-wrap::-webkit-scrollbar { width: 5px; }
+#ride-log-wrap::-webkit-scrollbar-track { background: transparent; }
+#ride-log-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+#ride-log-wrap::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.activity-card {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  cursor: default;
+}
+.activity-card:last-child { border-bottom: none; }
+.activity-card:hover { background: var(--bg); }
+
+.activity-card-sport {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; padding: 14px 0 14px 16px;
+  flex-shrink: 0;
+}
+.activity-card-body { padding: 12px 14px; min-width: 0; }
+.activity-card-name {
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px; color: var(--text);
+}
+.activity-card-meta {
+  font-size: 11px; color: var(--muted); margin-bottom: 7px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.activity-card-sport-label {
+  font-family: var(--font-head); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 2px; color: white;
+}
+.activity-card-stats {
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+}
+.activity-card-stat {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.activity-card-stat-val {
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  line-height: 1; color: var(--text);
+}
+.activity-card-stat-label {
+  font-family: var(--font-head); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+.activity-card-note {
+  font-size: 11px; color: var(--muted); font-style: italic;
+  margin-top: 5px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 480px;
+}
+.activity-card-actions {
+  display: flex; align-items: center; gap: 2px;
+  padding: 12px 14px 12px 0;
+  flex-shrink: 0;
+}
+.activity-card-note-row {
+  grid-column: 1 / -1;
+  padding: 0 14px 12px 58px;
+  border-bottom: 1px solid var(--border);
+  display: none;
+}
+.activity-card-note-row.open { display: block; }
+
+@media (max-width: 768px) {
+  .insight-row { grid-template-columns: 1fr; }
+  .activity-card { grid-template-columns: 40px 1fr auto; }
+  .activity-card-stats { gap: 10px; }
+  .activity-card-stat-val { font-size: 13px; }
+  .activity-card-note-row { padding-left: 40px; }
+}
+
 #map-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(10,9,8,0.75); backdrop-filter: blur(4px);
@@ -766,7 +866,7 @@ body::before {
 .map-no-route-icon { font-size: 36px; }
 
 /* ===== ACHIEVEMENTS ===== */
-.achievement-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.achievement-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .achievement-card {
   background: var(--bg); border: 1px solid var(--border);
   border-radius: 4px; padding: 14px 12px; text-align: center;
@@ -1036,27 +1136,23 @@ body::before {
           </div>
         </div>
 
-        <div style="height:16px"></div>
-
-        <!-- Personal Records -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Personal Records</div>
-            <div class="panel-badge" id="pr-sport-badge">All sports</div>
+        <!-- Personal Records + Achievements side by side -->
+        <div class="insight-row">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Personal Records</div>
+              <div class="panel-badge" id="pr-sport-badge">All sports</div>
+            </div>
+            <div class="pr-grid" id="pr-grid"></div>
           </div>
-          <div class="pr-grid" id="pr-grid"></div>
-        </div>
-
-        <!-- Achievements -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Achievements</div>
-            <div class="panel-badge" id="achievement-badge">0 unlocked</div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Achievements</div>
+              <div class="panel-badge" id="achievement-badge">0 unlocked</div>
+            </div>
+            <div class="achievement-grid" id="achievement-grid"></div>
           </div>
-          <div class="achievement-grid" id="achievement-grid"></div>
         </div>
-
-        <div style="height:16px"></div>
 
         <!-- Activity log -->
         <div class="panel">
@@ -2089,53 +2185,60 @@ function buildRideLog() {
     else dirBtn.textContent = sortAsc ? '↑ Low→High' : '↓ High→Low';
   }
 
-  const rows = sorted.map(r => {
-    const hrs = Math.floor(r.duration/3600);
-    const mins = Math.floor((r.duration%3600)/60);
-    const dur = hrs ? hrs+'h '+mins+'m' : mins+'m';
+  const cards = sorted.map(r => {
+    const dur = secsToHm(r.duration);
     const key = encodeURIComponent(r.name + '|' + r.date);
     const rawKey = r.name + '|' + r.date;
     const sc = sportColor(r.sport);
     const note = notes[rawKey] || '';
     const hasNote = note.length > 0;
-    const noteRowId = 'note-row-' + btoa(encodeURIComponent(rawKey)).replace(/[^a-zA-Z0-9]/g,'').slice(0,16);
-    return `<tr>
-      <td>
-        <div class="ride-name">${r.name}</div>
-        <div class="ride-date">${r.date}</div>
-        ${hasNote ? `<div class="note-preview">💬 ${note.replace(/</g,'&lt;')}</div>` : ''}
-      </td>
-      <td><span class="sport-chip" style="background:${sc}">${sportIcon(r.sport)} ${sportLabel(r.sport)}</span></td>
-      <td><span class="stat-chip">${r.distKm.toFixed(1)} km</span></td>
-      <td>${dur}</td>
-      <td>${r.avgSpeed.toFixed(1)} km/h</td>
-      <td><span class="stat-chip elev-chip">↑ ${r.ascent.toFixed(0)}m</span></td>
-      <td>${r.avgHr > 0 ? '<span class="stat-chip hr-chip">♥ '+r.avgHr+' bpm</span>' : '—'}</td>
-      <td>${r.calories > 0 ? r.calories.toLocaleString()+' kcal' : '—'}</td>
-      <td style="white-space:nowrap">
-        ${r.route && r.route.length ? `<button class="route-btn has-route" onclick="openMap('${key}')" title="View route on map">🗺</button>` : `<button class="route-btn" onclick="openMap('${key}')" title="No GPS route — CSV activity" disabled style="opacity:0.2;cursor:default">🗺</button>`}
-        <button class="note-btn ${hasNote?'has-note':''}" onclick="toggleNoteRow('${noteRowId}','${key}')" title="${hasNote?'Edit note':'Add note'}">💬</button>
-        <button class="delete-btn" onclick="deleteRide('${key}')" title="Remove this activity">✕</button>
-      </td>
-    </tr>
-    <tr class="note-row hidden" id="${noteRowId}">
-      <td colspan="9">
-        <div class="note-editor">
-          <textarea class="note-textarea" id="ta-${noteRowId}" placeholder="Add a note about this activity…" rows="2">${note.replace(/</g,'&lt;')}</textarea>
-          <button class="note-save-btn" onclick="saveNote('${key}','${noteRowId}')">Save</button>
+    const noteId = 'note-row-' + btoa(encodeURIComponent(rawKey)).replace(/[^a-zA-Z0-9]/g,'').slice(0,16);
+    const hasRoute = r.route && r.route.length;
+
+    const stats = [
+      { val: r.distKm.toFixed(1) + ' km', label: 'Distance' },
+      { val: dur,                           label: 'Duration' },
+      r.avgSpeed > 0 ? { val: r.avgSpeed.toFixed(1) + ' km/h', label: 'Avg Speed' } : null,
+      r.ascent > 0   ? { val: '↑ ' + r.ascent.toFixed(0) + ' m', label: 'Elevation' } : null,
+      r.avgHr > 0    ? { val: '♥ ' + r.avgHr + ' bpm', label: 'Heart Rate' } : null,
+      r.calories > 0 ? { val: r.calories.toLocaleString() + ' kcal', label: 'Calories' } : null,
+    ].filter(Boolean);
+
+    return `
+      <div class="activity-card">
+        <div class="activity-card-sport" style="color:${sc}">${sportIcon(r.sport)}</div>
+        <div class="activity-card-body">
+          <div class="activity-card-name">${r.name}</div>
+          <div class="activity-card-meta">
+            <span class="activity-card-sport-label" style="background:${sc}">${sportLabel(r.sport)}</span>
+            <span>${r.date}</span>
+          </div>
+          <div class="activity-card-stats">
+            ${stats.map(s => `
+              <div class="activity-card-stat">
+                <div class="activity-card-stat-val">${s.val}</div>
+                <div class="activity-card-stat-label">${s.label}</div>
+              </div>`).join('')}
+          </div>
+          ${hasNote ? `<div class="activity-card-note">💬 ${note.replace(/</g,'&lt;')}</div>` : ''}
         </div>
-      </td>
-    </tr>`;
+        <div class="activity-card-actions">
+          ${hasRoute
+            ? `<button class="route-btn has-route" onclick="openMap('${key}')" title="View route on map">🗺</button>`
+            : `<button class="route-btn" title="No GPS route" disabled style="opacity:0.15;cursor:default">🗺</button>`}
+          <button class="note-btn ${hasNote?'has-note':''}" onclick="toggleNoteRow('${noteId}','${key}')" title="${hasNote?'Edit note':'Add note'}">💬</button>
+          <button class="delete-btn" onclick="deleteRide('${key}')" title="Remove">✕</button>
+        </div>
+      </div>
+      <div class="activity-card-note-row" id="${noteId}">
+        <div class="note-editor">
+          <textarea class="note-textarea" id="ta-${noteId}" placeholder="Add a note about this activity…" rows="2">${note.replace(/</g,'&lt;')}</textarea>
+          <button class="note-save-btn" onclick="saveNote('${key}','${noteId}')">Save</button>
+        </div>
+      </div>`;
   }).join('');
 
-  wrap.innerHTML = `<table class="ride-table">
-    <thead><tr>
-      <th>Activity</th><th>Sport</th><th>Distance</th><th>Duration</th>
-      <th>Avg speed</th><th>Elevation</th><th>Heart rate</th>
-      <th>Calories</th><th></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  wrap.innerHTML = `<div class="activity-card-list">${cards}</div>`;
 }
 
 function switchTrend(btn, metric) {
@@ -2505,10 +2608,14 @@ function saveNotes() {
 function toggleNoteRow(rowId, encodedKey) {
   const row = document.getElementById(rowId);
   if (!row) return;
-  const isHidden = row.classList.contains('hidden');
+  const isOpen = row.classList.contains('open');
   // Close any other open note rows first
-  document.querySelectorAll('.note-row:not(.hidden)').forEach(r => r.classList.add('hidden'));
-  if (isHidden) {
+  document.querySelectorAll('.activity-card-note-row.open, .note-row:not(.hidden)').forEach(r => {
+    r.classList.remove('open');
+    r.classList.add('hidden');
+  });
+  if (!isOpen) {
+    row.classList.add('open');
     row.classList.remove('hidden');
     const ta = document.getElementById('ta-' + rowId);
     if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
@@ -2525,7 +2632,7 @@ function saveNote(encodedKey, rowId) {
   saveNotes();
   // Close the row and rebuild the log to update preview + button color
   const row = document.getElementById(rowId);
-  if (row) row.classList.add('hidden');
+  if (row) { row.classList.remove('open'); row.classList.add('hidden'); }
   buildRideLog();
 }
 
